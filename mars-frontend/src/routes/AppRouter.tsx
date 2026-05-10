@@ -1,5 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
+import AppLayout from '../layouts/AppLayout';
+
 import Landing from '../pages/Landing';
 import Dashboard from '../pages/DashBoard';
 import MeetingInput from '../pages/MeetingInput';
@@ -12,20 +14,25 @@ const router = createBrowserRouter([
     Component: Landing,
   },
   {
-    path: '/dashboard',
-    Component: Dashboard,
-  },
-  {
-    path: '/meeting/new',
-    Component: MeetingInput,
-  },
-  {
-    path: '/actions',
-    Component: ActionItems,
-  },
-  {
-    path: '/suggestions',
-    Component: Suggestions,
+    Component: AppLayout,
+    children: [
+      {
+        path: '/dashboard',
+        Component: Dashboard,
+      },
+      {
+        path: '/meeting/new',
+        Component: MeetingInput,
+      },
+      {
+        path: '/actions',
+        Component: ActionItems,
+      },
+      {
+        path: '/suggestions',
+        Component: Suggestions,
+      },
+    ],
   },
 ]);
 
