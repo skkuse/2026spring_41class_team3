@@ -2,19 +2,19 @@ import { NavLink, Outlet } from 'react-router-dom';
 
 const navItems = [
   {
-    label: 'Dashboard',
+    label: '대시보드',
     path: '/dashboard',
   },
   {
-    label: 'Meetings',
-    path: '/meeting/new',
+    label: '회의',
+    path: '/meetings',
   },
   {
-    label: 'Action Items',
+    label: '액션 아이템',
     path: '/actions',
   },
   {
-    label: 'Suggestions',
+    label: '제안',
     path: '/suggestions',
   },
 ];
