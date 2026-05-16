@@ -1,8 +1,9 @@
+import AiFeatureList from '../components/meetings/AiFeatureList';
 import MeetingInputPanel from '../components/meetings/MeetingInputPanel';
 
 function Meetings() {
   return (
-    <main className="min-h-screen bg-background px-6 py-8 text-foreground md:px-10">
+    <main className="min-h-full bg-background px-6 py-8 text-foreground md:px-10">
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header>
           <h1 className="text-3xl text-primary">회의 입력</h1>
@@ -12,6 +13,7 @@ function Meetings() {
         </header>
 
         <MeetingInputPanel />
+        <AiFeatureList />
       </div>
     </main>
   );
