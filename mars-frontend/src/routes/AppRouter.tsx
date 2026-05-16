@@ -8,6 +8,7 @@ import MeetingInput from '../pages/MeetingInput';
 import Meetings from '../pages/Meetings';
 import ActionItems from '../pages/ActionItems';
 import Suggestions from '../pages/Suggestions';
+import StyleGuide from '../pages/StyleGuide';
 
 const router = createBrowserRouter([
   {
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
       {
         path: '/suggestions',
         Component: Suggestions,
+      },
+      {
+        path: '/style-guide',
+        Component: StyleGuide,
       },
     ],
   },

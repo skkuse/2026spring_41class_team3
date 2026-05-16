@@ -17,6 +17,10 @@ const navItems = [
     label: '제안',
     path: '/suggestions',
   },
+  {
+    label: '스타일',
+    path: '/style-guide',
+  },
 ];
 
 function AppLayout() {
