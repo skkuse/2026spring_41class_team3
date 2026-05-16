@@ -42,11 +42,13 @@ function AiFeatureList() {
   }, [isOpen]);
 
   const handleToggle = () => {
-    setIsOpen((current) => {
-      const nextIsOpen = !current;
-      shouldScrollOnOpenRef.current = nextIsOpen;
-      return nextIsOpen;
+    const nextIsOpen = !isOpen;
+
+    console.log('[Meetings] AI 기능 토글 버튼 클릭', {
+      isOpen: nextIsOpen,
     });
+    shouldScrollOnOpenRef.current = nextIsOpen;
+    setIsOpen(nextIsOpen);
   };
 
   return (

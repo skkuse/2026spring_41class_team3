@@ -8,7 +8,12 @@ function MeetingInputPanel() {
   const [notes, setNotes] = useState('');
 
   const handleGenerate = () => {
-    console.log('액션 아이템 생성', { notes });
+    console.log('[Meetings][API] 액션 아이템 생성 버튼 클릭', { notes });
+  };
+
+  const handleClear = () => {
+    console.log('[Meetings] 지우기 버튼 클릭');
+    setNotes('');
   };
 
   return (
@@ -18,11 +23,13 @@ function MeetingInputPanel() {
           icon="upload"
           title="파일 업로드"
           description="TXT, PDF, DOCX"
+          onClick={() => console.log('[Meetings][API] 파일 업로드 버튼 클릭')}
         />
         <UploadOptionCard
           icon="record"
           title="오디오 녹음"
           description="실시간 전사"
+          onClick={() => console.log('[Meetings][API] 오디오 녹음 버튼 클릭')}
         />
       </div>
 
@@ -42,7 +49,7 @@ function MeetingInputPanel() {
       <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <button
           type="button"
-          onClick={() => setNotes('')}
+          onClick={handleClear}
           className="rounded-lg border border-border px-5 py-2.5 text-sm text-muted-foreground transition hover:border-primary/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         >
           지우기
