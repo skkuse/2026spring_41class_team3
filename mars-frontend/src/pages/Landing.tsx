@@ -10,15 +10,15 @@ const Landing: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     // 10자리 숫자 프로젝트 코드 저장 상태
     const [projectCode, setProjectCode] = useState<string>('');
-    // [신규] 에러 메시지 텍스트 상태 관리
+    // 에러 메시지 텍스트 상태 관리
     const [errorMessage, setErrorMessage] = useState<string>('');
 
-    // [Create New Project] 버튼: 바로 대시보드로 이동
+    // [새 프로젝트 생성] 버튼 -> 대시보드로 이동
     const handleCreateProject = () => {
         navigate('/dashboard');
     };
 
-    // [Join with Project Code] 버튼: 모달 팝업 오픈
+    // [프로젝트 코드로 참여] 버튼 -> 모달 팝업 오픈
     const handleOpenJoinModal = () => {
         setErrorMessage(''); // 열 때 에러 메시지 초기화
         setProjectCode('');   // 입력창 초기화
@@ -29,31 +29,26 @@ const Landing: React.FC = () => {
     const handleJoinSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        // 1. 아예 입력을 안 했을 때
         if (!projectCode) {
             setErrorMessage('프로젝트 코드를 입력해 주세요.');
             return;
         }
 
-        // 2. 10자리가 안 될 때
         if (projectCode.length !== 10) {
             setErrorMessage('코드는 정확히 10자리 숫자여야 합니다.');
             return;
         }
         
-        // 검증 통과 시 대시보드로 이동
         setErrorMessage('');
         console.log(`입장 프로젝트 코드: ${projectCode}`);
         setIsModalOpen(false);
         navigate('/dashboard');
     };
 
-    // 사용자가 글자를 타이핑할 때 호출되는 함수
     const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/[^0-9]/g, ''); // 숫자만 필터링
         setProjectCode(value);
         
-        // 사용자가 다시 타이핑하기 시작하면 아래 에러 메시지를 자연스럽게 지워줌
         if (value.length === 10) {
             setErrorMessage('');
         }
@@ -62,71 +57,81 @@ const Landing: React.FC = () => {
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-8 box-border font-sans relative">
           
-            <header className="text-center mb-12">
-                <h1 className="text-6xl font-extrabold tracking-wider m-0 bg-gradient-to-r from-[#FF8A65] to-primary bg-clip-text text-transparent font-['Rajdhani']">
+            {/* ================= HEADER AREA ================= */}
+            <header className="text-center mb-10">
+                <h1 className="text-6xl font-extrabold tracking-wider m-0 bg-gradient-to-r from-[#FF8A65] to-primary bg-clip-text text-transparent font-['Rajdhani'] uppercase">
                     MARS
                 </h1>
-                <p className="text-muted-foreground text-lg mt-2">
+                <p className="text-muted-foreground/80 text-sm mt-3 tracking-wide">
                     Minutes to Action & Review System
                 </p>
             </header>
             
-            <main className="max-w-[900px] w-full text-center">
-                <h2 className="text-4xl font-bold mb-4 font-['Rajdhani']">Turn Meetings into Action</h2>
-                <p className="text-muted-foreground text-lg leading-relaxed max-w-[600px] mx-auto mb-10">
-                    Extract action items, track execution, and improve productivity with AI-powered workflow management
+            {/* ================= MAIN CONTENT AREA ================= */}
+            <main className="max-w-[1000px] w-full text-center">
+                {/* 레퍼런스의 크고 신뢰감 있는 볼드 텍스트 느낌을 그대로 살렸습니다. */}
+                <h2 className="text-5xl font-bold mb-5 tracking-tight text-foreground">
+                    회의를 실행으로 전환하세요
+                </h2>
+                
+                {/* 모던하고 군더더기 없는 한 줄 서브 카피 */}
+                <p className="text-muted-foreground/80 text-base max-w-[800px] mx-auto mb-12 tracking-tight font-normal">
+                    AI 기반 워크플로우 관리로 액션 아이템을 추출하고, 실행을 추적하며, 생산성을 향상시킵니다
                 </p>
                 
-                {/* 상단 액션 버튼 그룹 */}
-                <div className="flex gap-4 justify-center mb-20 max-sm:flex-col max-sm:items-stretch max-sm:max-w-[300px] max-sm:mx-auto">
+                {/* 메인 동작 버튼 영역 */}
+                <div className="flex gap-4 justify-center mb-24 max-sm:flex-col max-sm:items-stretch max-sm:max-w-[300px] max-sm:mx-auto">
                     <button 
-                        className="bg-primary text-primary-foreground font-semibold px-7 py-3 rounded-md hover:opacity-90 transition-all transform hover:-translate-y-0.5 cursor-pointer" 
+                        className="bg-primary text-primary-foreground font-semibold px-8 py-3.5 rounded-md hover:opacity-90 transition-all transform hover:-translate-y-0.5 cursor-pointer text-sm" 
                         onClick={handleCreateProject}
                     >
-                        Create New Project
+                        새 프로젝트 생성
                     </button>
                     <button 
-                        className="bg-secondary text-foreground border border-border font-semibold px-7 py-3 rounded-md hover:bg-neutral-800 transition-all transform hover:-translate-y-0.5 cursor-pointer" 
+                        className="bg-secondary text-foreground border border-border font-semibold px-8 py-3.5 rounded-md hover:bg-neutral-800 transition-all transform hover:-translate-y-0.5 cursor-pointer text-sm" 
                         onClick={handleOpenJoinModal}
                     >
-                        Join with Project Code
+                        프로젝트 코드로 참여
                     </button>
                 </div>
                 
-                {/* 서비스 주요 특장점 그리드 카드 */}
+                {/* ================= FEATURE CARDS SECTION ================= */}
+                {/* 레퍼런스 스타일의 차분한 테두리와 일관된 레이아웃을 반영했습니다. */}
                 <div className="grid grid-cols-3 gap-6 w-full max-md:grid-cols-1">
-                    {/* 카드 1 */}
-                    <div className="bg-card border border-border rounded-lg p-8 text-center transition-all hover:border-primary hover:-translate-y-1">
-                        <div className="w-11 h-11 mx-auto mb-5 flex items-center justify-center rounded-md bg-[#1F1D1C] border border-[#3A2A24]">
-                            <Target className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                    
+                    {/* 카드 1: 액션 아이템 추출 */}
+                    <div className="bg-[#111318]/50 border border-border/70 rounded-xl p-8 text-center transition-all hover:border-primary/50">
+                        <div className="w-12 h-12 mx-auto mb-6 flex items-center justify-center rounded-xl bg-[#1E1614] border border-[#3E241C]">
+                            <Target className="w-5 h-5 text-primary" strokeWidth={1.5} />
                         </div>
-                        <h3 className="text-xl font-semibold mb-3 text-foreground font-['Rajdhani']">Action Item Extraction</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            AI-powered extraction of actionable tasks from meeting notes
+                        <h3 className="text-lg font-bold mb-3 text-foreground tracking-tight">액션 아이템 추출</h3>
+                        <p className="text-xs text-muted-foreground/80 leading-relaxed tracking-tight">
+                            AI 기반 회의록에서 실행 가능한 작업 자동 추출
                         </p>
                     </div>
                     
-                    {/* 카드 2 */}
-                    <div className="bg-card border border-border rounded-lg p-8 text-center transition-all hover:border-primary hover:-translate-y-1">
-                        <div className="w-11 h-11 mx-auto mb-5 flex items-center justify-center rounded-md bg-[#1F1D1C] border border-[#3A2A24]">
-                            <TrendingUp className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                    {/* 카드 2: 실행 추적 */}
+                    <div className="bg-[#111318]/50 border border-border/70 rounded-xl p-8 text-center transition-all hover:border-primary/50">
+                        <div className="w-12 h-12 mx-auto mb-6 flex items-center justify-center rounded-xl bg-[#1E1614] border border-[#3E241C]">
+                            <TrendingUp className="w-5 h-5 text-primary" strokeWidth={1.5} />
                         </div>
-                        <h3 className="text-xl font-semibold mb-3 text-foreground font-['Rajdhani']">Execution Tracking</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            Monitor progress and completion rates in real-time
+                        <h3 className="text-lg font-bold mb-3 text-foreground tracking-tight">실행 추적</h3>
+                        <p className="text-xs text-muted-foreground/80 leading-relaxed tracking-tight">
+                            실시간으로 진행 상황과 완료율 모니터링
                         </p>
                     </div>
                     
-                    {/* 카드 3 */}
-                    <div className="bg-card border border-border rounded-lg p-8 text-center transition-all hover:border-primary hover:-translate-y-1">
-                        <div className="w-11 h-11 mx-auto mb-5 flex items-center justify-center rounded-md bg-[#1F1D1C] border border-[#3A2A24]">
-                            <Zap className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                    {/* 카드 3: 다음 회의 제안 */}
+                    <div className="bg-[#111318]/50 border border-border/70 rounded-xl p-8 text-center transition-all hover:border-primary/50">
+                        <div className="w-12 h-12 mx-auto mb-6 flex items-center justify-center rounded-xl bg-[#1E1614] border border-[#3E241C]">
+                            <Zap className="w-5 h-5 text-primary" strokeWidth={1.5} />
                         </div>
-                        <h3 className="text-xl font-semibold mb-3 text-foreground font-['Rajdhani']">Next Meeting Suggestions</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            Get intelligent recommendations for improving productivity
+                        <h3 className="text-lg font-bold mb-3 text-foreground tracking-tight">다음 회의 제안</h3>
+                        <p className="text-xs text-muted-foreground/80 leading-relaxed tracking-tight">
+                            생산성 향상을 위한 AI 기반 인사이트 제공
                         </p>
                     </div>
+                    
                 </div>
             </main>
 
@@ -144,9 +149,9 @@ const Landing: React.FC = () => {
                             <X className="w-4 h-4" />
                         </button>
 
-                        {/* 모달 헤더 헤딩 */}
+                        {/* 모달 헤더 */}
                         <div className="mb-5">
-                            <h3 className="text-xl font-bold font-['Rajdhani'] tracking-wide text-foreground">Join Existing Project</h3>
+                            <h3 className="text-xl font-bold tracking-tight text-foreground">기존 프로젝트 참여</h3>
                             <p className="text-xs text-muted-foreground mt-1">공유받은 10자리 숫자 코드를 입력해 주세요.</p>
                         </div>
 
@@ -176,18 +181,19 @@ const Landing: React.FC = () => {
                                     )}
                                 </div>
                             </div>
+                            
                             {/* 바텀 제어 버튼 */}
                             <div className="flex gap-3 pt-1">
                                 <button 
                                     type="button"
-                                    className="flex-1 bg-secondary text-foreground border border-border text-sm font-semibold py-2.5 rounded-lg hover:bg-neutral-800 cursor-pointer transition-all"
+                                    className="flex-1 bg-secondary text-foreground border border-border text-sm font-semibold py-2.5 rounded-lg hover:bg-neutral-800 transition-all cursor-pointer"
                                     onClick={() => setIsModalOpen(false)}
                                 >
                                     취소
                                 </button>
                                 <button 
                                     type="submit"
-                                    className="flex-1 bg-primary text-primary-foreground text-sm font-semibold py-2.5 rounded-lg hover:opacity-90 cursor-pointer transition-all"
+                                    className="flex-1 bg-primary text-primary-foreground text-sm font-semibold py-2.5 rounded-lg hover:opacity-90 transition-all cursor-pointer"
                                 >
                                     프로젝트 입장
                                 </button>
