@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Lightbulb, ArrowRight, Sparkles, TrendingDown, CheckSquare } from 'lucide-react';
+import { Lightbulb, ArrowRight, } from 'lucide-react';
 
 interface SuggestionItem {
     id: number;
