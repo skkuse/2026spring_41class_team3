@@ -1,4 +1,5 @@
 import os
+import json
 from openai import OpenAI
 from prompt import SYSTEM_PROMPT
 
@@ -25,4 +26,7 @@ def get_openai_response(user_input: str) -> str:
         ],
         response_format={"type": "json_object"}
     )
-    return response.choices[0].message.content
+
+    # json 형태로 반환  
+    generated_text = json.loads(response.choices[0].message.content)
+    return generated_text

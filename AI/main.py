@@ -30,7 +30,7 @@ def main():
     # bert score (treshold 0.7 이상 통과)
     ## PASS 시 - DB 저장 로직 추가 필요
     ## FAIL 시 - API Error handling 필요
-    if bert_score['recall'] >= 0.7:
+    if bert_score['f1'] >= 0.7:
         print("PASS: BertScore is above the threshold of 0.7")
         return gpt_response
     else:
