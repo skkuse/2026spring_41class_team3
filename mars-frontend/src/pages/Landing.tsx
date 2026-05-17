@@ -17,23 +17,60 @@ const Landing: React.FC = () => {
     const navigate = useNavigate();
     
     const [viewMode, setViewMode] = useState<ViewMode>('landing');
-
     const [isJoinModalOpen, setIsJoinModalOpen] = useState<boolean>(false);
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isCopied, setIsCopied] = useState<boolean>(false);
+
     const [userId, setUserId] = useState<string>('');
-    const [idWarning, setIdWarning] = useState<string>(''); 
     const [projectCode, setProjectCode] = useState<string>('');
+    const [creatorId, setCreatorId] = useState<string>('');
+    const [newProjectName, setNewProjectName] = useState<string>('');
+    
+    // 경고 및 에러 메시지 
+    const [idWarning, setIdWarning] = useState<string>(''); 
+    const [creatorIdWarning, setCreatorIdWarning] = useState<string>(''); 
     const [errorMessage, setErrorMessage] = useState<string>('');
 
-    // [Create New Project] 버튼: 바로 대시보드로 이동
-    const handleCreateProject = () => {
-        navigate('/dashboard');
+    const [successCode, setSuccessCode] = useState<string>('');
+    const [pendingNavigateData, setPendingNavigateData] = useState<MockProjectData | null>(null);
+
+    
+    // 유저 ID 입력 제한 (영문, 숫자만 가능하도록 예시 가이드 반영)
+    const handleIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setUserId(value);
+        if (value.length > 0 && value.length < 3) {
+            setIdWarning('최소 3글자 이상 입력해 주세요.');
+        } else {
+            setIdWarning('');
+        }
     };
 
-    // [Join with Project Code] 버튼: 모달 팝업 오픈
+    // 생성하기 관리자 ID 입력 제한
+    const handleCreatorIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setCreatorId(value);
+        if (value.length > 0 && value.length < 3) {
+            setCreatorIdWarning('최소 3글자 이상 입력해 주세요.');
+        } else {
+            setCreatorIdWarning('');
+        }
+    };
+
+    // 프로젝트 참여 코드 입력 제한 (숫자만 입력 가능)
+    const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^0-9]/g, ''); // 숫자 제외 문자 제거
+        setProjectCode(value);
+    };
+
+    // 모달 팝업 오픈
     const handleOpenJoinModal = () => {
-        setErrorMessage(''); // 열 때 에러 메시지 초기화
-        setProjectCode('');   // 입력창 초기화
-        setIsModalOpen(true);
+        setErrorMessage(''); 
+        setProjectCode('');   
+        setUserId('');
+        setIdWarning('');
+        setIsJoinModalOpen(true);
     };
 
     // 유저 ID와 회의 번호(프로젝트 코드) 통합 검증 후 입장
@@ -54,9 +91,19 @@ const Landing: React.FC = () => {
 
         setIsLoading(true);
         setErrorMessage('');
-        console.log(`입장 프로젝트 코드: ${projectCode}`);
-        setIsModalOpen(false);
-        navigate('/dashboard');
+        
+        // 가상 연동 데이터 생성 후 이동
+        setTimeout(() => {
+            setIsLoading(false);
+            setIsJoinModalOpen(false);
+            navigate('/dashboard', {
+                state: {
+                    userId: userId,
+                    projectCode: projectCode,
+                    title: '참여한 협업 프로젝트'
+                }
+            });
+        }, 800);
     };
 
     // 새 프로젝트 생성 API 제출 핸들러 
@@ -79,7 +126,6 @@ const Landing: React.FC = () => {
 
         const projectCreateBody = {
             title: newProjectName,
-            description: newProjectDesc,
             creator_id: creatorId
         };
 
@@ -110,7 +156,7 @@ const Landing: React.FC = () => {
         try {
             await navigator.clipboard.writeText(successCode);
             setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000); // 2초 뒤 복사 상태 초기화
+            setTimeout(() => setIsCopied(false), 2000); 
         } catch (err) {
             console.error('코드 복사에 실패했습니다.', err);
         }
@@ -141,13 +187,15 @@ const Landing: React.FC = () => {
                         </p>
                         <div className="flex gap-4 justify-center mb-24">
                             <button 
+                                type="button"
                                 className="bg-primary text-primary-foreground font-semibold px-8 py-3.5 rounded-md hover:opacity-90 text-sm cursor-pointer flex items-center gap-2 transition-all" 
-                                onClick={() => { setViewMode('create_project'); setErrorMessage(''); setCreatorIdWarning(''); }}
+                                onClick={() => { setViewMode('create_project'); setErrorMessage(''); setCreatorIdWarning(''); setCreatorId(''); setNewProjectName(''); }}
                             >
                                 <PlusCircle className="w-4 h-4" />
                                 새 프로젝트 생성
                             </button>
                             <button 
+                                type="button"
                                 className="bg-secondary text-foreground border border-border font-semibold px-8 py-3.5 rounded-md hover:bg-neutral-800 text-sm cursor-pointer" 
                                 onClick={handleOpenJoinModal}
                             >
@@ -183,7 +231,7 @@ const Landing: React.FC = () => {
                                             placeholder="User ID (영문/숫자, 최소 3자)"
                                             value={userId}
                                             onChange={handleIdChange}
-                                            autoComplete="off"           
+                                            autoComplete="off"          
                                             spellCheck={false}          
                                             className={`w-full bg-[#161920] border text-foreground px-4 py-2.5 rounded-lg text-base focus:outline-none transition-all ${idWarning ? 'border-destructive focus:border-destructive' : 'border-border focus:border-primary'}`}
                                             autoFocus
@@ -191,7 +239,7 @@ const Landing: React.FC = () => {
                                         {idWarning && <p className="text-destructive text-xs font-medium pl-1 mt-1">{idWarning}</p>}
                                     </div>
 
-                                    {/* 2프로젝트 코드 입력란 */}
+                                    {/* 프로젝트 코드 입력란 */}
                                     <div className="space-y-1.5 text-left">
                                         <label className="text-xs font-semibold text-muted-foreground ml-1">회의 코드 (10자리 숫자)</label>
                                         <input 
