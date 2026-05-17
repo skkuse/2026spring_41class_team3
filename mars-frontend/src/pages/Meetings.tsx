@@ -8,7 +8,7 @@ function Meetings() {
         <header>
           <h1 className="text-3xl text-primary">회의 입력</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            회의록을 업로드하거나 붙여넣어 액션 아이템을 추출하세요
+            회의 제목, 목적, 회의록 내용을 입력해 액션 아이템을 추출하세요
           </p>
         </header>
 
