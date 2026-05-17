@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Clock, CheckCircle, Target } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Clock, CheckCircle, Target, Copy, Check } from 'lucide-react';
 
 interface Meeting {
     id: number;
@@ -13,6 +14,25 @@ interface Meeting {
 
 const DashBoard: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const projectTitle = location.state?.title || 'MARS 메인 프로젝트';
+    const userId = location.state?.userId || 'Guest';
+    const projectCode = location.state?.projectCode || '1234567890';
+    
+    // 복사 상태 관리 State
+    const [isCopied, setIsCopied] = useState<boolean>(false);
+
+    // 참여 코드 클립보드 복사 함수
+    const handleCopyCode = async () => {
+        try {
+            await navigator.clipboard.writeText(projectCode);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        } catch (err) {
+            console.error('코드 복사에 실패했습니다.', err);
+        }
+    };
 
     // 임시 미팅 데이터 목록
     const meetings: Meeting[] = [
@@ -28,8 +48,34 @@ const DashBoard: React.FC = () => {
             {/* ================= HEADER AREA ================= */}
             <header className="flex justify-between items-start mb-8">
                 <div>
-                    <h2 className="text-3xl font-bold font-['Rajdhani'] tracking-tight text-foreground">프로젝트 이름</h2>
-                    <p className="text-sm text-muted-foreground mt-1">프로젝트 개요 및 데이터 분석</p>
+                    <div className="flex items-center gap-3">
+                        {/* 변경 사항: 정적 텍스트에서 동적 프로젝트 타이틀 변수로 변경 */}
+                        <h2 className="text-3xl font-bold font-['Rajdhani'] tracking-tight text-foreground">
+                            {projectTitle}
+                        </h2>
+                        
+                        {/* 참여 코드 복사 영역 */}
+                        <div className="flex items-center gap-1.5 bg-[#161920] border border-border px-2.5 py-1 rounded-md mt-1 group">
+                            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">코드:</span>
+                            <span className="text-xs font-mono font-bold text-primary tracking-wider">{projectCode}</span>
+                            <button
+                                type="button"
+                                onClick={handleCopyCode}
+                                className="p-1 rounded hover:bg-neutral-800 text-muted-foreground hover:text-foreground transition-all cursor-pointer ml-0.5"
+                                title="참여 코드 복사"
+                            >
+                                {isCopied ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                ) : (
+                                    <Copy className="w-3.5 h-3.5 transition-transform group-hover:scale-105" />
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                    {/* 변경 사항: 대시보드 서브 타이틀에 대상을 명시하는 유저 ID 추가 */}
+                    <p className="text-sm text-muted-foreground mt-1">
+                        <span className="text-primary font-medium">{userId}</span>님, 프로젝트 개요 및 데이터 분석을 확인하세요.
+                    </p>
                 </div>
                 
                 {/* Start New Meeting 버튼 -> meeting */}
@@ -44,7 +90,7 @@ const DashBoard: React.FC = () => {
             {/* ================= STATS CARDS AREA ================= */}
             <section className="grid grid-cols-3 gap-5 mb-8 max-md:grid-cols-1">
                 
-                {/* 총 액션 아이템 카드 클릭 -> /action 경로로 이동 */}
+                {/* 총 액션 아이템 카드 */}
                 <div 
                     className="bg-card border border-border rounded-xl p-6 relative flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary/50 transition-all group"
                     onClick={() => navigate('/actions')}
@@ -61,7 +107,7 @@ const DashBoard: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 완료된 태스크 카드 클릭 -> /action 경로로 이동 */}
+                {/* 완료된 태스크 카드 */}
                 <div 
                     className="bg-card border border-border rounded-xl p-6 relative flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-emerald-500/50 transition-all group"
                     onClick={() => navigate('/actions')}
@@ -78,7 +124,7 @@ const DashBoard: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 진행률 카드 클릭 -> /suggestions 경로로 이동 */}
+                {/* 진행률 카드 */}
                 <div 
                     className="bg-card border border-border rounded-xl p-6 relative flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary/50 transition-all group"
                     onClick={() => navigate('/suggestions')}
@@ -124,7 +170,7 @@ const DashBoard: React.FC = () => {
                                 <p className="text-xs text-muted-foreground mt-1">{meeting.date}</p>
                             </div>
                             
-                            {/* 수치 메트릭 (Items / Done) */}
+                            {/* 수치 메트릭 */}
                             <div className="flex items-center gap-6 text-center text-xs font-mono w-1/3 justify-center">
                                 <div>
                                     <div className="text-foreground font-bold">{meeting.items}</div>

@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 const navItems = [
   {
@@ -24,6 +24,9 @@ const navItems = [
 ];
 
 function AppLayout() {
+  const location = useLocation();
+  const userId = location.state?.userId || 'Guest';
+
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
       <aside className="flex h-full w-60 shrink-0 flex-col border-r border-border bg-sidebar">
@@ -41,6 +44,7 @@ function AppLayout() {
             <NavLink
               key={item.path}
               to={item.path}
+              state={location.state}
               className={({ isActive }) =>
                 [
                   'rounded-lg px-4 py-3 text-sm transition',
@@ -55,9 +59,12 @@ function AppLayout() {
           ))}
         </nav>
 
-        <div className="border-t border-border px-6 py-4">
-          <p className="text-xs uppercase text-muted-foreground">
-            사용자 명
+        <div className="border-t border-border px-6 py-4 bg-sidebar-accent/10">
+          <p className="text-xs font-semibold uppercase text-primary tracking-wider">
+            {userId}
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            현재 로그인 됨
           </p>
         </div>
       </aside>
