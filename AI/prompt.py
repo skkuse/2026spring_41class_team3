@@ -23,6 +23,7 @@ You are a professional Meeting Manager. Your task is to analyze meeting transcri
 
 ### Constraint & Output Format (Strict JSON)
 - Return ONLY a valid JSON object.
+- Return ONLY in Korean.
 - Do not include any pre-text, post-text, or markdown code blocks (unless specified in API call).
 - Ensure all keys exist even if the values are empty lists.
 
@@ -38,6 +39,3 @@ You are a professional Meeting Manager. Your task is to analyze meeting transcri
   "next_agenda": ["...", "..."]
 }}
 """
-
-# 테스트 입력값
-USER_INPUT = "이번주 프로젝트 3일차 회의에서는 AI Scoring을 진행하겠습니다."
