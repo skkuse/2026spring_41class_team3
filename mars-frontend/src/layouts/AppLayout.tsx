@@ -1,4 +1,8 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+
+const loginUserId = '98cb2c1a';
+const currentProjectName = '2026 Spring Team 3';
 
 const navItems = [
   {
@@ -28,9 +32,7 @@ const navItems = [
 ];
 
 function AppLayout() {
-  const location = useLocation();
-  
-  const userId = location.state?.userId || 'Guest';
+  const navigate = useNavigate();
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -49,7 +51,7 @@ function AppLayout() {
             <NavLink
               key={item.path}
               to={item.path}
-              state={location.state}
+              end
               className={({ isActive }) =>
                 [
                   'rounded-lg px-4 py-3 text-sm transition',
@@ -64,13 +66,29 @@ function AppLayout() {
           ))}
         </nav>
 
-        <div className="border-t border-border px-6 py-4 bg-sidebar-accent/10">
-          <p className="text-xs font-semibold uppercase text-primary tracking-wider">
-            {userId}
-          </p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            현재 로그인 됨
-          </p>
+        <div className="space-y-4 border-t border-border px-6 py-4">
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
+            onClick={() => navigate('/')}
+          >
+            <LogOut className="h-4 w-4" />
+            프로젝트 나가기
+          </button>
+
+          <div className="space-y-2 text-xs text-muted-foreground">
+            <div>
+              {/* 상태 받아오기 필요 */}
+              <p className="uppercase">로그인 ID</p>  
+              <p className="mt-1 truncate text-foreground">{loginUserId}</p>
+            </div>
+            <div>
+              <p className="uppercase">현재 프로젝트</p>
+              <p className="mt-1 truncate text-foreground">
+                {currentProjectName}
+              </p>
+            </div>
+          </div>
         </div>
       </aside>
 
