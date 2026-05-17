@@ -23,7 +23,7 @@ interface AgendaSuggestion {
 }
 
 const Suggestions: React.FC = () => {
-    const [agendaSuggestions, setAgendaSuggestions] = React.useState<AgendaSuggestion[]>([
+    const [agendaSuggestions] = React.useState<AgendaSuggestion[]>([
         {
             id: 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
             project_id: 'p9o8n7m6-l5k4-j3i2-h1g0-f9e8d7c6b5a4',
