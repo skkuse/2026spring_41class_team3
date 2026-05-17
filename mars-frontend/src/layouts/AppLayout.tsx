@@ -34,6 +34,14 @@ const navItems = [
 function AppLayout() {
   const navigate = useNavigate();
 
+  const handleLeaveProject = () => {
+    console.log('[AppLayout][API] 프로젝트 나가기 버튼 클릭', {
+      loginUserId,
+      currentProjectName,
+    });
+    navigate('/');
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
       <aside className="flex h-full w-60 shrink-0 flex-col border-r border-border bg-sidebar">
@@ -70,7 +78,7 @@ function AppLayout() {
           <button
             type="button"
             className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
-            onClick={() => navigate('/')}
+            onClick={handleLeaveProject}
           >
             <LogOut className="h-4 w-4" />
             프로젝트 나가기

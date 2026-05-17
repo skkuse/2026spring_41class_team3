@@ -15,11 +15,13 @@ const Landing: React.FC = () => {
 
     // [Create New Project] 버튼: 바로 대시보드로 이동
     const handleCreateProject = () => {
+        console.log('[Landing][API] 프로젝트 생성 버튼 클릭');
         navigate('/dashboard');
     };
 
     // [Join with Project Code] 버튼: 모달 팝업 오픈
     const handleOpenJoinModal = () => {
+        console.log('[Landing] 프로젝트 코드 입장 모달 열기');
         setErrorMessage(''); // 열 때 에러 메시지 초기화
         setProjectCode('');   // 입력창 초기화
         setIsModalOpen(true);
@@ -43,7 +45,9 @@ const Landing: React.FC = () => {
         
         // 검증 통과 시 대시보드로 이동
         setErrorMessage('');
-        console.log(`입장 프로젝트 코드: ${projectCode}`);
+        console.log('[Landing][API] 프로젝트 코드로 입장 요청', {
+            projectCode,
+        });
         setIsModalOpen(false);
         navigate('/dashboard');
     };

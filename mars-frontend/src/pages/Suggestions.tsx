@@ -41,6 +41,14 @@ const Suggestions: React.FC = () => {
         }
     };
 
+    const handleApplySuggestion = (item: SuggestionItem) => {
+        console.log('[Suggestions][API] 제안 적용 요청', {
+            suggestionId: item.id,
+            title: item.title,
+            impact: item.impact,
+        });
+    };
+
     return (
         <main className="flex-1 p-10 bg-background text-foreground overflow-y-auto w-full max-w-[1200px] font-sans space-y-6">
             
@@ -80,7 +88,11 @@ const Suggestions: React.FC = () => {
                                     {item.impact}
                                 </span>
                                 {/* 제안을 바로 적용할 수 있는 화살표 버튼 */}
-                                <button className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer">
+                                <button
+                                    type="button"
+                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                                    onClick={() => handleApplySuggestion(item)}
+                                >
                                     <ArrowRight className="w-4 h-4" />
                                 </button>
                             </div>

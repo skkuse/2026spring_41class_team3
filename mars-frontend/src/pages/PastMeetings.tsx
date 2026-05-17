@@ -14,10 +14,14 @@ function PastMeetings() {
 
   const handleSelectMeeting = (meetingId: string) => {
     if (selectedMeetingId === meetingId) {
+      console.log('[PastMeetings] 지난 회의 상세 닫기', { meetingId });
       setSelectedMeetingId(null);
       return;
     }
 
+    console.log('[PastMeetings][API] 지난 회의 상세 조회 클릭', {
+      meetingId,
+    });
     setSelectedMeetingId(meetingId);
   };
 
