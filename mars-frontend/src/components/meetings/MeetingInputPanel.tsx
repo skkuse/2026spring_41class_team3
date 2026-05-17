@@ -19,8 +19,6 @@ function MeetingInputPanel() {
 
   const handleClear = () => {
     console.log('[Meetings] 지우기 버튼 클릭');
-    setTitle('');
-    setPurpose('');
     setRawText('');
   };
 
