@@ -1,92 +1,95 @@
 import * as React from 'react';
-import { Lightbulb } from 'lucide-react';
+import { Lightbulb, ArrowRight, Sparkles, TrendingDown, CheckSquare } from 'lucide-react';
 
 interface SuggestionItem {
     id: number;
     title: string;
     description: string;
-    impact: 'High Impact' | 'Medium Impact' | 'Low Impact';
+    impact: '높음' | '보통' | '낮음';
 }
 
 const Suggestions: React.FC = () => {
     const suggestions: SuggestionItem[] = [
         {
             id: 1,
-            title: 'Reduce Meeting Duration',
-            description: 'Your meetings average 65 minutes. Consider 45-minute timeslots to improve focus.',
-            impact: 'High Impact'
+            title: '회의 시간 단축 제안',
+            description: '최근 우리 팀의 평균 회의 시간은 65분입니다. 팀원들의 집중도 향상을 위해 다음 회의는 45분 타이머를 설정하고 진행해보는 것을 추천합니다.',
+            impact: '높음'
         },
         {
             id: 2,
-            title: 'Action Item Follow-up',
-            description: 'Schedule a 15-minute check-in 3 days after each meeting to review progress.',
-            impact: 'Medium Impact'
+            title: '액션 아이템 중간 점검',
+            description: '회의 종료 3일 후, 배정된 액션 아이템의 진행 상황을 체크할 수 있는 15분짜리 짧은 리마인드 세션을 캘린더에 자동으로 등록할까요?',
+            impact: '보통'
         },
         {
             id: 3,
-            title: 'Priority Distribution',
-            description: 'Only 30% of tasks are marked high priority. Consider reassessing task urgency.',
-            impact: 'Medium Impact'
+            title: '업무 우선순위 재조정',
+            description: '현재 등록된 태스크 중 오직 30%만 높은 우선순위로 지정되어 있습니다. 마감일이 임박한 중요한 업무가 누락되지 않았는지 검토가 필요합니다.',
+            impact: '보통'
         }
     ];
 
     const getImpactStyle = (impact: string) => {
         switch (impact) {
-            case 'High Impact':
+            case '높음':
                 return 'text-primary bg-primary/10 border-primary/20'; 
-            case 'Medium Impact':
-                return 'text-slate-400 bg-slate-800/40 border-slate-700/30'; 
+            case '보통':
+                return 'text-slate-400 bg-slate-800/40 border-slate-700/30';
             default:
                 return 'text-muted-foreground bg-muted/10 border-border';
         }
     };
 
     return (
-        <main className="flex-1 p-10 bg-background text-foreground overflow-y-auto w-full max-w-[1200px] font-sans">
+        <main className="flex-1 p-10 bg-background text-foreground overflow-y-auto w-full max-w-[1200px] font-sans space-y-6">
             
-            {/* 시안 상단 영역의 카드 박스 시작 */}
+            {/* ================= 메인 제안 카드 리스트 ================= */}
             <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
                 
-                {/* 헤더 타이틀 영역 (전구 아이콘 + 제목) */}
+                {/* 헤더 */}
                 <div className="flex items-center gap-2 mb-6">
                     <Lightbulb className="w-5 h-5 text-primary" strokeWidth={2} />
                     <h3 className="text-lg font-bold font-['Rajdhani'] tracking-wide text-foreground">
-                        Next Meeting Suggestions
+                        AI 회의 분석 및 맞춤 제안
                     </h3>
                 </div>
                 
-                {/* 제안 목록 리스트 반복 출력 */}
+                {/* 리스트 */}
                 <div className="space-y-4">
                     {suggestions.map((item) => (
                         <div 
                             key={item.id} 
-                            className={`flex items-start justify-between p-5 rounded-xl bg-[#1A1D23]/40 border transition-all ${
-                                item.impact === 'High Impact' 
-                                ? 'border-primary/40 hover:border-primary/60' 
+                            className={`flex items-center justify-between p-5 rounded-xl bg-[#1A1D23]/40 border transition-all ${
+                                item.impact === '높음' 
+                                ? 'border-primary/40 hover:border-primary/60'
                                 : 'border-border/60 hover:border-border'
                             }`}
                         >
-                            {/* 왼쪽: 제목 및 설명글 */}
                             <div className="flex-1 pr-6">
-                                <h4 className="text-sm font-semibold text-foreground font-sans">
+                                <h4 className="text-sm font-semibold text-foreground">
                                     {item.title}
                                 </h4>
-                                <p className="text-xs text-muted-foreground mt-1.5 font-sans leading-relaxed">
+                                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                                     {item.description}
                                 </p>
                             </div>
                             
-                            {/* 오른쪽: 임팩트 배지 배정 */}
-                            <div className="flex-shrink-0">
-                                <span className={`text-[10px] font-bold font-sans tracking-wide px-2.5 py-1 rounded border uppercase ${getImpactStyle(item.impact)}`}>
+                            <div className="flex items-center gap-4 flex-shrink-0">
+                                <span className={`text-[10px] font-bold tracking-wide px-2.5 py-1 rounded border ${getImpactStyle(item.impact)}`}>
                                     {item.impact}
                                 </span>
+                                {/* 제안을 바로 적용할 수 있는 화살표 버튼 */}
+                                <button className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer">
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
                             </div>
                         </div>
                     ))}
                 </div>
-                
             </div>
+
+
         </main>
     );
 };
