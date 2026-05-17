@@ -50,6 +50,10 @@ function ActionItems() {
   );
 
   const handleAssigneeChange = (itemId: string, assigneeId: string) => {
+    console.log('[ActionItems][API] 액션 아이템 담당자 변경 요청', {
+      itemId,
+      assigneeId,
+    });
     setActionItems((items) =>
       items.map((item) =>
         item.id === itemId ? { ...item, assignee_id: assigneeId } : item,
@@ -58,6 +62,10 @@ function ActionItems() {
   };
 
   const handleStatusChange = (itemId: string, status: ActionItemStatus) => {
+    console.log('[ActionItems][API] 액션 아이템 상태 변경 요청', {
+      itemId,
+      status,
+    });
     setActionItems((items) =>
       items.map((item) => (item.id === itemId ? { ...item, status } : item)),
     );
@@ -67,6 +75,11 @@ function ActionItems() {
     itemId: string,
     priority: ActionItemPriority,
   ) => {
+    console.log('[ActionItems][API] 액션 아이템 우선순위 변경 요청', {
+      itemId,
+      priority,
+      ...priorityLevels[priority],
+    });
     setActionItems((items) =>
       items.map((item) =>
         item.id === itemId
@@ -77,6 +90,7 @@ function ActionItems() {
   };
 
   const handleCreateActionItem = (input: NewActionItemInput) => {
+    console.log('[ActionItems][API] 액션 아이템 생성 요청', input);
     const deadline = `${input.deadline}T23:59:59+09:00`;
 
     setActionItems((items) => [
@@ -96,6 +110,7 @@ function ActionItems() {
   };
 
   const handleDeleteActionItem = (itemId: string) => {
+    console.log('[ActionItems][API] 액션 아이템 삭제 요청', { itemId });
     setActionItems((items) => items.filter((item) => item.id !== itemId));
   };
 

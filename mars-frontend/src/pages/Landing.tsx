@@ -23,71 +23,17 @@ const Landing: React.FC = () => {
     const [idWarning, setIdWarning] = useState<string>(''); 
     const [projectCode, setProjectCode] = useState<string>('');
     const [errorMessage, setErrorMessage] = useState<string>('');
-    const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const [newProjectName, setNewProjectName] = useState<string>('');
-    const [newProjectDesc, setNewProjectDesc] = useState<string>('');
-    const [creatorId, setCreatorId] = useState<string>('');
-    const [creatorIdWarning, setCreatorIdWarning] = useState<string>(''); 
+    // [Create New Project] 버튼: 바로 대시보드로 이동
+    const handleCreateProject = () => {
+        navigate('/dashboard');
+    };
 
-    // 생성 완료 커스텀 모달 제어용 상태
-    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
-    const [successCode, setSuccessCode] = useState<string>('');
-    const [isCopied, setIsCopied] = useState<boolean>(false);
-    // 대시보드 이동 시 넘겨줄 임시 데이터를 보관하는 데이터 세트
-    const [pendingNavigateData, setPendingNavigateData] = useState<MockProjectData | null>(null);
-
+    // [Join with Project Code] 버튼: 모달 팝업 오픈
     const handleOpenJoinModal = () => {
-        setErrorMessage('');
-        setIdWarning('');
-        setProjectCode('');
-        setUserId('');
-        setIsJoinModalOpen(true);
-    };
-
-    // ID 입력 및 실시간 유효성 검사
-    const handleIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setUserId(value);
-        
-        if (value.length === 0) {
-            setIdWarning('');
-            return;
-        }
-
-        const hasInvalidChar = /[^a-zA-Z0-9]/.test(value);
-        if (hasInvalidChar) {
-            setIdWarning('알파벳과 숫자만 사용할 수 있습니다.');
-        } else {
-            setIdWarning('');
-            if (value.length >= 3 && projectCode.length === 10) setErrorMessage('');
-        }
-    };
-
-    // 생성자 ID 입력 및 실시간 유효성 검사
-    const handleCreatorIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setCreatorId(value);
-
-        if (value.length === 0) {
-            setCreatorIdWarning('');
-            return;
-        }
-
-        const hasInvalidChar = /[^a-zA-Z0-9]/.test(value);
-        if (hasInvalidChar) {
-            setCreatorIdWarning('알파벳과 숫자만 사용할 수 있습니다.');
-        } else {
-            setCreatorIdWarning('');
-            if (value.length >= 3 && newProjectName.trim()) setErrorMessage('');
-        }
-    };
-
-    // 코드 입력 제한 (숫자만 최대 10자리)
-    const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/[^0-9]/g, '');
-        setProjectCode(value);
-        if (userId.length >= 3 && !idWarning && value.length === 10) setErrorMessage('');
+        setErrorMessage(''); // 열 때 에러 메시지 초기화
+        setProjectCode('');   // 입력창 초기화
+        setIsModalOpen(true);
     };
 
     // 유저 ID와 회의 번호(프로젝트 코드) 통합 검증 후 입장
@@ -108,24 +54,9 @@ const Landing: React.FC = () => {
 
         setIsLoading(true);
         setErrorMessage('');
-
-        setTimeout(() => {
-            setIsLoading(false);
-            const isCodeValid = projectCode === '1234567890'; 
-
-            if (isCodeValid) {
-                let userRole: 'admin' | 'member' = 'member';
-                if (userId.toLowerCase().includes('admin')) {
-                    userRole = 'admin';
-                }
-
-                console.log(`[입장성공] 유저: ${userId} | 프로젝트 코드: ${projectCode} | 권한: ${userRole}`);
-                setIsJoinModalOpen(false);
-                navigate('/dashboard', { state: { userId, projectCode, role: userRole } });
-            } else {
-                setErrorMessage('존재하지 않거나 만료된 프로젝트 코드입니다.');
-            }
-        }, 800);
+        console.log(`입장 프로젝트 코드: ${projectCode}`);
+        setIsModalOpen(false);
+        navigate('/dashboard');
     };
 
     // 새 프로젝트 생성 API 제출 핸들러 
