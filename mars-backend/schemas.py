@@ -51,6 +51,10 @@ class ActionItemCreate(BaseModel):
     meeting_id: Optional[uuid.UUID] = None  # Source meeting ID (optional)
     description: str  # Task description
     status: str = "TODO"  # Default status
+    priority: Optional[int] = None  # Priority
+    importance: Optional[int] = None  # Importance
+    urgency: Optional[int] = None  # Urgency
+    deadline: Optional[datetime.datetime] = None  # Due date
 
 # Request payload for status updates
 class ActionItemUpdate(BaseModel):
@@ -63,6 +67,10 @@ class ActionItemResponse(BaseModel):
     meeting_id: Optional[uuid.UUID] = None
     description: str
     status: str
+    priority: Optional[int] = None
+    importance: Optional[int] = None
+    urgency: Optional[int] = None
+    deadline: Optional[datetime.datetime] = None
     created_at: datetime.datetime
 
     class Config:

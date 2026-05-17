@@ -75,6 +75,11 @@ class ActionItem(Base):
     status = Column(String, default="TODO")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+    priority = Column(Integer, nullable=True)     
+    importance = Column(Integer, nullable=True)  
+    urgency = Column(Integer, nullable=True)    
+    deadline = Column(DateTime, nullable=True)
+
     meeting = relationship("Meeting", back_populates="action_items")
     assignee = relationship("User", back_populates="action_items")
 
