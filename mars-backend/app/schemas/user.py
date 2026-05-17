@@ -4,13 +4,14 @@ from pydantic import BaseModel
 from typing import Optional
 
 class UserCreate(BaseModel):
-    project_id: uuid.UUID
+    username: str
     name: str
     role: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: uuid.UUID
-    project_id: uuid.UUID
+    project_id: Optional[uuid.UUID] = None
+    username: str
     name: str
     role: Optional[str] = None
     joined_at: datetime.datetime

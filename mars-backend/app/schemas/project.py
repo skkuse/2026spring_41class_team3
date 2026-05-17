@@ -5,6 +5,7 @@ from typing import Optional
 
 class ProjectCreate(BaseModel):
     name: str
+    owner_user_id: uuid.UUID 
     description: Optional[str] = None
     project_type: Optional[str] = None
     deadline: Optional[datetime.datetime] = None
@@ -12,6 +13,7 @@ class ProjectCreate(BaseModel):
 class ProjectResponse(BaseModel):
     id: uuid.UUID
     name: str
+    owner_id: uuid.UUID 
     description: Optional[str] = None
     project_type: Optional[str] = None
     deadline: Optional[datetime.datetime] = None

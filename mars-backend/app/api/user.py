@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.schemas import UserCreate, UserResponse
-from app.crud import create_user, get_user
+from app.crud import create_user, get_user, get_user_by_username
 from app.db.database import SessionLocal
 import uuid
 
@@ -16,6 +16,9 @@ def get_db():
 
 @router.post("/users/", response_model=UserResponse)
 def create_new_user(user: UserCreate, db: Session = Depends(get_db)):
+    existing = get_user_by_username(db, user.username) 
+    if existing:
+        raise HTTPException(status_code=400, detail="이미 사용 중인 username입니다")  
     return create_user(db, user)
 
 @router.get("/users/{user_id}", response_model=UserResponse)

@@ -5,8 +5,14 @@ from fastapi import HTTPException
 import uuid
 
 def create_project(db: Session, project: ProjectCreate) -> Project:
+    owner = db.query(User).filter(User.id == project.owner_user_id).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+
+
     db_project = Project(
         name=project.name,
+        owner_id=project.owner_user_id,
         description=project.description,
         project_type=project.project_type,
         deadline=project.deadline
@@ -14,6 +20,10 @@ def create_project(db: Session, project: ProjectCreate) -> Project:
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
+
+    owner.project_id = db_project.id
+    db.commit()
+
     return db_project
 
 def get_project(db: Session, project_id: uuid.UUID) -> Project:

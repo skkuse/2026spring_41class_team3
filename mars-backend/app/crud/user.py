@@ -6,11 +6,8 @@ from app.schemas.user import UserCreate
 import uuid
 
 def create_user(db: Session, user: UserCreate) -> User:
-    target_project = db.query(Project).filter(Project.id == user.project_id).first()
-    if not target_project:
-        raise HTTPException(status_code=404, detail="해당 프로젝트를 찾을 수 없습니다.")
     db_user = User(
-        project_id=user.project_id,
+        username=user.username,
         name=user.name,
         role=user.role
     )
@@ -21,3 +18,6 @@ def create_user(db: Session, user: UserCreate) -> User:
 
 def get_user(db: Session, user_id: uuid.UUID) -> User:
     return db.query(User).filter(User.id == user_id).first()
+
+def get_user_by_username(db: Session, username: str):
+    return db.query(User).filter(User.username == username).first()
