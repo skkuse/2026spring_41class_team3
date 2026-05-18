@@ -42,7 +42,11 @@ def add_member(db: Session, project_id: uuid.UUID, user_id: uuid.UUID):
     user.project_id = project_id
     db.commit()
     db.refresh(user)
-    return user
+    return {
+        "project_id": project_id,
+        "user_id": user.id,
+        "joined_at": user.joined_at,
+    }
 
 def get_members(db: Session, project_id: uuid.UUID):
     project = db.query(Project).filter(Project.id == project_id).first()

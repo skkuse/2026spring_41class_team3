@@ -16,7 +16,7 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/projects/", response_model=ProjectResponse, summary="프로젝트 생성")
+@router.post("/projects/", response_model=ProjectResponse, summary="프로젝트 생성(owneruser id 필요)")
 def create_new_project(project: ProjectCreate, db: Session = Depends(get_db)):
     return create_project(db, project)
 

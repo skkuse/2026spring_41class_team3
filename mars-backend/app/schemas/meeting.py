@@ -54,7 +54,7 @@ class MeetingDetailResponse(BaseModel):
 
 class AgendaResponse(BaseModel):
     id: uuid.UUID
-    meeting_id: uuid.UUID
+    project_id: uuid.UUID
     proposed_agendas: list
     is_adopted: bool
     created_at: datetime.datetime
