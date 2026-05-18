@@ -51,3 +51,9 @@ def read_proposed_agendas(project_id: uuid.UUID, db: Session = Depends(get_db)):
 def delete_meeting_api(meeting_id: uuid.UUID, db: Session = Depends(get_db)):
     from app.crud.meeting import delete_meeting
     return delete_meeting(db, meeting_id)
+
+# 아젠다 삭제 API
+@router.delete("/agendas/{agenda_id}", summary="아젠다 삭제")
+def delete_agenda_api(agenda_id: uuid.UUID, db: Session = Depends(get_db)):
+    from app.crud.meeting import delete_agenda
+    return delete_agenda(db, agenda_id)

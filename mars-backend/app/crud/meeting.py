@@ -56,3 +56,11 @@ def delete_meeting(db: Session, meeting_id: uuid.UUID):
     db.delete(meeting)
     db.commit()
     return {"message": "미팅이 삭제되었습니다."}
+
+def delete_agenda(db: Session, agenda_id: uuid.UUID):
+    agenda = db.query(Agenda).filter(Agenda.id == agenda_id).first()
+    if not agenda:
+        raise HTTPException(status_code=404, detail="아젠다를 찾을 수 없습니다.")
+    db.delete(agenda)
+    db.commit()
+    return {"message": "아젠다가 삭제되었습니다."}
