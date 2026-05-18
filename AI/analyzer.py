@@ -1,4 +1,5 @@
 import os
+import json
 from openai import OpenAI
 from prompt import SYSTEM_PROMPT
 
@@ -8,7 +9,8 @@ def get_openai_response(user_input: str) -> str:
     """
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
-    formatted_prompt = SYSTEM_PROMPT.format(
+    # DB retrieval 값과 system prompt를 합쳐 최종 prompt 생성
+    retrieved_prompt = SYSTEM_PROMPT.format(
         meeting_script=user_input["meeting_script"],
         meeting_purpose=user_input["meeting_purpose"],
         participants=user_input["participants"],
@@ -19,9 +21,12 @@ def get_openai_response(user_input: str) -> str:
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": retrieved_prompt},
             {"role": "user", "content": "Please analyze the meeting based on the instructions."}
         ],
         response_format={"type": "json_object"}
     )
-    return response.choices[0].message.content
+
+    # json 형태로 반환  
+    generated_text = json.loads(response.choices[0].message.content)
+    return generated_text
