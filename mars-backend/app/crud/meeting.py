@@ -48,3 +48,11 @@ def get_meeting(db: Session, meeting_id: uuid.UUID):
 
 def get_proposed_agendas(db: Session, project_id: uuid.UUID):
     return db.query(Agenda).filter(Agenda.project_id == project_id).all()
+
+def delete_meeting(db: Session, meeting_id: uuid.UUID):
+    meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="미팅을 찾을 수 없습니다.")
+    db.delete(meeting)
+    db.commit()
+    return {"message": "미팅이 삭제되었습니다."}

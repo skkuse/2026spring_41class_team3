@@ -36,3 +36,9 @@ def list_project_action_items(
 @router.patch("/action-items/{item_id}/status", response_model=ActionItemResponse, summary="액션아이템 상태 업데이트")
 def patch_action_item(item_id: uuid.UUID, item_update: ActionItemUpdate, db: Session = Depends(get_db)):
     return update_action_item_status(db, item_id, item_update)
+
+# 액션아이템 삭제 API
+@router.delete("/action-items/{item_id}", summary="액션아이템 삭제")
+def delete_action_item_api(item_id: uuid.UUID, db: Session = Depends(get_db)):
+    from app.crud.action_item import delete_action_item
+    return delete_action_item(db, item_id)

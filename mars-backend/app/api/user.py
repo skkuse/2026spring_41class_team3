@@ -28,5 +28,11 @@ def read_user(user_id: uuid.UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
+# 유저 삭제 API
+@router.delete("/users/{user_id}", summary="유저 삭제")
+def delete_user_api(user_id: uuid.UUID, db: Session = Depends(get_db)):
+    from app.crud import delete_user
+    return delete_user(db, user_id)
+
 
     

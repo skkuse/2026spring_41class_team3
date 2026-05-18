@@ -45,3 +45,9 @@ def read_meeting(project_id: uuid.UUID, meeting_id: uuid.UUID, db: Session = Dep
 @router.get("/projects/{project_id}/agendas/proposed", response_model=List[AgendaResponse], summary="AI 제안 다음 안건 조회")
 def read_proposed_agendas(project_id: uuid.UUID, db: Session = Depends(get_db)):
     return get_proposed_agendas(db, project_id)
+
+# 미팅 삭제 API
+@router.delete("/meetings/{meeting_id}", summary="미팅 삭제")
+def delete_meeting_api(meeting_id: uuid.UUID, db: Session = Depends(get_db)):
+    from app.crud.meeting import delete_meeting
+    return delete_meeting(db, meeting_id)

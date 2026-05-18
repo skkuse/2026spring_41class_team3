@@ -54,3 +54,11 @@ def get_members(db: Session, project_id: uuid.UUID):
         raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다.")
     
     return db.query(User).filter(User.project_id == project_id).all()
+
+def delete_project(db: Session, project_id: uuid.UUID):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="프로젝트를 찾을 수 없습니다.")
+    db.delete(project)
+    db.commit()
+    return {"message": "프로젝트가 삭제되었습니다."}

@@ -61,3 +61,11 @@ def update_action_item_status(db: Session, item_id: uuid.UUID, item_update: Acti
     db.commit()
     db.refresh(target_item)
     return target_item
+
+def delete_action_item(db: Session, item_id: uuid.UUID):
+    item = db.query(ActionItem).filter(ActionItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="할 일을 찾을 수 없습니다.")
+    db.delete(item)
+    db.commit()
+    return {"message": "할 일이 삭제되었습니다."}
