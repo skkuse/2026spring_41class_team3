@@ -13,7 +13,7 @@ class Project(Base):
     description = Column(Text, nullable=True)
     project_type = Column(String, nullable=True)
     deadline = Column(DateTime, nullable=True)
-    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    owner_id = Column(UUID(as_uuid=True), nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Relationships (1:N)
