@@ -54,7 +54,7 @@ const Landing = () => {
 
       {state.isSuccessModalOpen && (
         <ProjectCreatedModal
-          projectId={state.successCode}
+          projectId={state.createdProjectId}
           isCopied={state.isCopied}
           onCopyProjectId={actions.handleCopyCode}
           onEnterDashboard={actions.handleCloseSuccessAndNavigate}

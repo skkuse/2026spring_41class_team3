@@ -2,7 +2,7 @@ import type * as React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiError, createProject } from '../../lib/api';
-import type { LandingViewMode, MockProjectData } from './types';
+import type { LandingViewMode, ProjectNavigationState } from './types';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -36,8 +36,8 @@ export const useLandingPage = () => {
   const [ownerUserIdWarning, setOwnerUserIdWarning] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const [successCode, setSuccessCode] = useState('');
-  const [pendingNavigateData, setPendingNavigateData] = useState<MockProjectData | null>(null);
+  const [createdProjectId, setCreatedProjectId] = useState('');
+  const [pendingNavigateData, setPendingNavigateData] = useState<ProjectNavigationState | null>(null);
 
   const resetCreateProjectForm = () => {
     setErrorMessage('');
@@ -104,20 +104,14 @@ export const useLandingPage = () => {
       return;
     }
 
-    setIsLoading(true);
     setErrorMessage('');
-
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsJoinModalOpen(false);
-      navigate('/dashboard', {
-        state: {
-          userId,
-          projectCode,
-          title: '참여한 협업 프로젝트',
-        },
-      });
-    }, 800);
+    setIsJoinModalOpen(false);
+    navigate('/dashboard', {
+      state: {
+        userId,
+        projectCode,
+      },
+    });
   };
 
   const handleCreateProjectSubmit = async (event: React.FormEvent) => {
@@ -164,7 +158,7 @@ export const useLandingPage = () => {
         deadline: deadlineDate.toISOString(),
       });
 
-      setSuccessCode(createdProject.id);
+      setCreatedProjectId(createdProject.id);
       setIsCopied(false);
       setPendingNavigateData({
         userId: createdProject.owner_id,
@@ -183,7 +177,7 @@ export const useLandingPage = () => {
 
   const handleCopyCode = async () => {
     try {
-      await navigator.clipboard.writeText(successCode);
+      await navigator.clipboard.writeText(createdProjectId);
       setIsCopied(true);
       window.setTimeout(() => setIsCopied(false), 2000);
     } catch (error) {
@@ -216,7 +210,7 @@ export const useLandingPage = () => {
       idWarning,
       ownerUserIdWarning,
       errorMessage,
-      successCode,
+      createdProjectId,
     },
     actions: {
       goToLanding,
