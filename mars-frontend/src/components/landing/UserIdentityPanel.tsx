@@ -9,8 +9,10 @@ interface UserIdentityPanelProps {
   duplicateCheckMessage: string;
   currentUser: UserIdentity | null;
   existingUser: UserIdentity | null;
+  isUserIdAvailable: boolean;
   onUserIdInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onCheckDuplicate: () => void;
+  onCreateUser: () => void;
   onAccessExistingUser: () => void;
   onSwitchToCreateUser: () => void;
   onSwitchToAccessUser: () => void;
@@ -23,8 +25,10 @@ const UserIdentityPanel = ({
   duplicateCheckMessage,
   currentUser,
   existingUser,
+  isUserIdAvailable,
   onUserIdInputChange,
   onCheckDuplicate,
+  onCreateUser,
   onAccessExistingUser,
   onSwitchToCreateUser,
   onSwitchToAccessUser,
@@ -90,12 +94,25 @@ const UserIdentityPanel = ({
         >
           {isCreateMode ? '중복 확인' : '접속'}
         </button>
+        {isCreateMode && isUserIdAvailable && (
+          <button
+            type="button"
+            onClick={onCreateUser}
+            className="bg-primary text-primary-foreground text-sm font-semibold px-4 py-3 rounded-lg hover:opacity-90 transition-all cursor-pointer whitespace-nowrap"
+          >
+            계정 생성
+          </button>
+        )}
       </div>
 
       <div className="min-h-5 mt-2">
         {userIdWarning && <p className="text-destructive text-xs font-medium">{userIdWarning}</p>}
         {!userIdWarning && duplicateCheckMessage && (
-          <p className={`text-xs font-medium ${isVerified || existingUser ? 'text-emerald-500' : 'text-destructive'}`}>
+          <p
+            className={`text-xs font-medium ${
+              isVerified || existingUser || isUserIdAvailable ? 'text-emerald-500' : 'text-destructive'
+            }`}
+          >
             {duplicateCheckMessage}
           </p>
         )}

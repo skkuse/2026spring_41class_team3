@@ -10,8 +10,10 @@ interface LandingHeroProps {
   duplicateCheckMessage: string;
   currentUser: UserIdentity | null;
   existingUser: UserIdentity | null;
+  isUserIdAvailable: boolean;
   onUserIdInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onCheckDuplicate: () => void;
+  onCreateUser: () => void;
   onAccessExistingUser: () => void;
   onSwitchToCreateUser: () => void;
   onSwitchToAccessUser: () => void;
@@ -26,8 +28,10 @@ const LandingHero = ({
   duplicateCheckMessage,
   currentUser,
   existingUser,
+  isUserIdAvailable,
   onUserIdInputChange,
   onCheckDuplicate,
+  onCreateUser,
   onAccessExistingUser,
   onSwitchToCreateUser,
   onSwitchToAccessUser,
@@ -61,8 +65,10 @@ const LandingHero = ({
           duplicateCheckMessage={duplicateCheckMessage}
           currentUser={currentUser}
           existingUser={existingUser}
+          isUserIdAvailable={isUserIdAvailable}
           onUserIdInputChange={onUserIdInputChange}
           onCheckDuplicate={onCheckDuplicate}
+          onCreateUser={onCreateUser}
           onAccessExistingUser={onAccessExistingUser}
           onSwitchToCreateUser={onSwitchToCreateUser}
           onSwitchToAccessUser={onSwitchToAccessUser}

@@ -15,9 +15,10 @@ export const apiRequest = async <TResponse>(
   const { body, headers, timeoutMs = API_REQUEST_TIMEOUT_MS, ...requestOptions } = options;
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+  const url = buildApiUrl(path);
 
   try {
-    const response = await fetch(buildApiUrl(path), {
+    const response = await fetch(url, {
       ...requestOptions,
       body: body === undefined ? undefined : JSON.stringify(body),
       headers: {

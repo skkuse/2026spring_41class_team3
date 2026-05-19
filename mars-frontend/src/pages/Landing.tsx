@@ -18,8 +18,10 @@ const Landing = () => {
             duplicateCheckMessage={state.duplicateCheckMessage}
             currentUser={state.currentUser}
             existingUser={state.existingUser}
+            isUserIdAvailable={state.isUserIdAvailable}
             onUserIdInputChange={actions.handleUserIdInputChange}
             onCheckDuplicate={actions.handleCheckDuplicate}
+            onCreateUser={actions.handleCreateUser}
             onAccessExistingUser={actions.handleAccessExistingUser}
             onSwitchToCreateUser={actions.handleSwitchToCreateUser}
             onSwitchToAccessUser={actions.handleSwitchToAccessUser}
