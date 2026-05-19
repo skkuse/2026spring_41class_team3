@@ -78,9 +78,43 @@ const validateUserId = (value: string) => {
   return '';
 };
 
+const getInitialUser = () => readCurrentUser();
+
+const getProjectValidationMessage = ({
+  projectName,
+  projectDescription,
+  projectType,
+  projectDeadline,
+}: {
+  projectName: string;
+  projectDescription: string;
+  projectType: string;
+  projectDeadline: string;
+}) => {
+  if (!projectName.trim()) {
+    return '프로젝트 이름을 입력해 주세요.';
+  }
+
+  if (!projectDescription.trim()) {
+    return '프로젝트 설명을 입력해 주세요.';
+  }
+
+  if (!projectType.trim()) {
+    return '프로젝트 유형을 입력해 주세요.';
+  }
+
+  const deadlineDate = new Date(projectDeadline);
+
+  if (!projectDeadline || Number.isNaN(deadlineDate.getTime())) {
+    return '마감일을 올바르게 입력해 주세요.';
+  }
+
+  return '';
+};
+
 export const useLandingPage = () => {
   const navigate = useNavigate();
-  const initialUser = readCurrentUser();
+  const [initialUser] = useState(getInitialUser);
 
   const [viewMode, setViewMode] = useState<LandingViewMode>('landing');
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
@@ -90,7 +124,6 @@ export const useLandingPage = () => {
 
   const [identityMode, setIdentityMode] = useState<UserIdentityMode>('access');
   const [currentUser, setCurrentUser] = useState<UserIdentity | null>(initialUser);
-  const [existingUser, setExistingUser] = useState<UserIdentity | null>(null);
   const [availableUserId, setAvailableUserId] = useState('');
   const [userIdInput, setUserIdInput] = useState(initialUser?.id ?? '');
   const [projectCode, setProjectCode] = useState('');
@@ -116,6 +149,17 @@ export const useLandingPage = () => {
     setProjectDeadline('');
   };
 
+  const resetIdentityPrompt = () => {
+    setCurrentUser(null);
+    setAvailableUserId('');
+    setDuplicateCheckMessage('');
+  };
+
+  const resetUserAvailability = () => {
+    setAvailableUserId('');
+    setDuplicateCheckMessage('');
+  };
+
   const goToLanding = () => {
     setViewMode('landing');
     setErrorMessage('');
@@ -137,9 +181,7 @@ export const useLandingPage = () => {
     const value = event.target.value.trim();
     setUserIdInput(value);
     setUserIdWarning(validateUserId(value));
-    setDuplicateCheckMessage('');
-    setExistingUser(null);
-    setAvailableUserId('');
+    resetUserAvailability();
 
     if (currentUser && currentUser.id !== value) {
       setCurrentUser(null);
@@ -155,10 +197,7 @@ export const useLandingPage = () => {
     setUserIdWarning(warning);
 
     if (warning || !normalizedUserId) {
-      setDuplicateCheckMessage('');
-      setCurrentUser(null);
-      setExistingUser(null);
-      setAvailableUserId('');
+      resetIdentityPrompt();
       return;
     }
 
@@ -167,14 +206,11 @@ export const useLandingPage = () => {
 
     if (registeredUuid) {
       logApiSkipped('중복 확인', READ_USER_API, '조회 결과: 이미 존재하는 아이디');
-      setExistingUser(null);
-      setCurrentUser(null);
-      setAvailableUserId('');
+      resetIdentityPrompt();
       setDuplicateCheckMessage('이미 사용 중인 아이디입니다. 접속하기를 이용해 주세요.');
       return;
     }
 
-    setExistingUser(null);
     setCurrentUser(null);
     setAvailableUserId(normalizedUserId);
     logApiSkipped('중복 확인', READ_USER_API, '조회 결과: 사용 가능한 아이디');
@@ -201,7 +237,6 @@ export const useLandingPage = () => {
       userId: user.id,
       userUuid: user.uuid,
     });
-    setExistingUser(null);
     setCurrentUser(null);
     setAvailableUserId('');
     setIdentityMode('access');
@@ -217,9 +252,7 @@ export const useLandingPage = () => {
     setUserIdWarning(warning);
 
     if (warning || !normalizedUserId) {
-      setDuplicateCheckMessage('');
-      setExistingUser(null);
-      setAvailableUserId('');
+      resetUserAvailability();
       return;
     }
 
@@ -228,7 +261,6 @@ export const useLandingPage = () => {
 
     if (!registeredUuid) {
       logApiSkipped('접속', READ_USER_API, '로컬에 등록된 아이디 없음');
-      setExistingUser(null);
       setCurrentUser(null);
       setAvailableUserId('');
       setDuplicateCheckMessage('등록된 아이디가 없습니다.');
@@ -241,7 +273,6 @@ export const useLandingPage = () => {
     };
 
     saveUserIdentity(user);
-    setExistingUser(user);
     setCurrentUser(user);
     setAvailableUserId('');
     setDuplicateCheckMessage('기존 아이디로 접속되었습니다.');
@@ -251,22 +282,16 @@ export const useLandingPage = () => {
     logButtonClick('처음이신가요? 새 아이디 만들기');
 
     setIdentityMode('create');
-    setCurrentUser(null);
-    setExistingUser(null);
-    setAvailableUserId('');
+    resetIdentityPrompt();
     setUserIdWarning(validateUserId(userIdInput));
-    setDuplicateCheckMessage('');
   };
 
   const handleSwitchToAccessUser = () => {
     logButtonClick('접속하기');
 
     setIdentityMode('access');
-    setCurrentUser(null);
-    setExistingUser(null);
-    setAvailableUserId('');
+    resetIdentityPrompt();
     setUserIdWarning(validateUserId(userIdInput));
-    setDuplicateCheckMessage('');
   };
 
   const handleProjectCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -329,25 +354,16 @@ export const useLandingPage = () => {
       return;
     }
 
-    if (!projectName.trim()) {
-      setErrorMessage('프로젝트 이름을 입력해 주세요.');
-      return;
-    }
-
-    if (!projectDescription.trim()) {
-      setErrorMessage('프로젝트 설명을 입력해 주세요.');
-      return;
-    }
-
-    if (!projectType.trim()) {
-      setErrorMessage('프로젝트 유형을 입력해 주세요.');
-      return;
-    }
-
+    const validationMessage = getProjectValidationMessage({
+      projectName,
+      projectDescription,
+      projectType,
+      projectDeadline,
+    });
     const deadlineDate = new Date(projectDeadline);
 
-    if (!projectDeadline || Number.isNaN(deadlineDate.getTime())) {
-      setErrorMessage('마감일을 올바르게 입력해 주세요.');
+    if (validationMessage) {
+      setErrorMessage(validationMessage);
       return;
     }
 
@@ -409,7 +425,6 @@ export const useLandingPage = () => {
       isCopied,
       identityMode,
       currentUser,
-      existingUser,
       isUserIdAvailable: availableUserId === userIdInput.trim(),
       userIdInput,
       projectCode,

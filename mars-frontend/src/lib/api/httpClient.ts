@@ -38,7 +38,7 @@ export const apiRequest = async <TResponse>(
     return responseBody as TResponse;
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new Error('API 요청 시간이 초과되었습니다.');
+      throw new Error('API 요청 시간이 초과되었습니다.', { cause: error });
     }
 
     throw error;

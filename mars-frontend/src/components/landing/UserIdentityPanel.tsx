@@ -8,7 +8,6 @@ interface UserIdentityPanelProps {
   userIdWarning: string;
   duplicateCheckMessage: string;
   currentUser: UserIdentity | null;
-  existingUser: UserIdentity | null;
   isUserIdAvailable: boolean;
   onUserIdInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onCheckDuplicate: () => void;
@@ -24,7 +23,6 @@ const UserIdentityPanel = ({
   userIdWarning,
   duplicateCheckMessage,
   currentUser,
-  existingUser,
   isUserIdAvailable,
   onUserIdInputChange,
   onCheckDuplicate,
@@ -110,7 +108,7 @@ const UserIdentityPanel = ({
         {!userIdWarning && duplicateCheckMessage && (
           <p
             className={`text-xs font-medium ${
-              isVerified || existingUser || isUserIdAvailable ? 'text-emerald-500' : 'text-destructive'
+              isVerified || isUserIdAvailable ? 'text-emerald-500' : 'text-destructive'
             }`}
           >
             {duplicateCheckMessage}

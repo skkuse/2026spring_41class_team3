@@ -17,7 +17,6 @@ const Landing = () => {
             userIdWarning={state.userIdWarning}
             duplicateCheckMessage={state.duplicateCheckMessage}
             currentUser={state.currentUser}
-            existingUser={state.existingUser}
             isUserIdAvailable={state.isUserIdAvailable}
             onUserIdInputChange={actions.handleUserIdInputChange}
             onCheckDuplicate={actions.handleCheckDuplicate}
