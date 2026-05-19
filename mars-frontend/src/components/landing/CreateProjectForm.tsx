@@ -2,17 +2,14 @@ import type * as React from 'react';
 import { ArrowLeft, FolderPlus } from 'lucide-react';
 
 interface CreateProjectFormProps {
-  ownerUserId: string;
   projectName: string;
   projectDescription: string;
   projectType: string;
   projectDeadline: string;
-  ownerUserIdWarning: string;
   errorMessage: string;
   isLoading: boolean;
   onBack: () => void;
   onCancel: () => void;
-  onOwnerUserIdChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onProjectNameChange: (projectName: string) => void;
   onProjectDescriptionChange: (description: string) => void;
   onProjectTypeChange: (projectType: string) => void;
@@ -21,17 +18,14 @@ interface CreateProjectFormProps {
 }
 
 const CreateProjectForm = ({
-  ownerUserId,
   projectName,
   projectDescription,
   projectType,
   projectDeadline,
-  ownerUserIdWarning,
   errorMessage,
   isLoading,
   onBack,
   onCancel,
-  onOwnerUserIdChange,
   onProjectNameChange,
   onProjectDescriptionChange,
   onProjectTypeChange,
@@ -41,11 +35,9 @@ const CreateProjectForm = ({
   const isSubmitDisabled =
     isLoading ||
     !projectName.trim() ||
-    !ownerUserId.trim() ||
     !projectDescription.trim() ||
     !projectType.trim() ||
-    !projectDeadline ||
-    !!ownerUserIdWarning;
+    !projectDeadline;
 
   return (
     <div className="w-full max-w-[620px] bg-card border border-border rounded-xl p-8 shadow-2xl animate-fade-in text-left">
@@ -61,10 +53,10 @@ const CreateProjectForm = ({
       <div className="mb-6">
         <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <FolderPlus className="w-6 h-6 text-primary" />
-          새로운 프로젝트 개설
+          새로운 프로젝트 생성
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          API 스펙에 맞춰 프로젝트 생성 정보를 입력해 주세요.
+          아래의 정보를 입력해 새로운 프로젝트를 생성하세요.
         </p>
       </div>
 
@@ -82,26 +74,10 @@ const CreateProjectForm = ({
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-foreground">소유자 사용자 ID</label>
-          <input
-            type="text"
-            placeholder="owner_user_id UUID"
-            value={ownerUserId}
-            onChange={onOwnerUserIdChange}
-            autoComplete="off"
-            spellCheck={false}
-            className={`w-full bg-[#161920] border text-foreground px-4 py-3 rounded-lg text-base focus:outline-none transition-all ${ownerUserIdWarning ? 'border-destructive focus:border-destructive' : 'border-border focus:border-primary'}`}
-            required
-          />
-          {ownerUserIdWarning && (
-            <p className="text-destructive text-xs font-medium pl-1 mt-1">{ownerUserIdWarning}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
           <label className="text-sm font-semibold text-foreground">프로젝트 설명</label>
           <textarea
-            placeholder="프로젝트 목적과 범위를 입력해 주세요"
+            placeholder="프로젝트 목적과 범위를 입력해 주세요. 
+상세할수록 더 높은 품질의 AI 서비스를 제공 받을 수 있습니다."
             value={projectDescription}
             onChange={(event) => onProjectDescriptionChange(event.target.value)}
             className="min-h-24 w-full resize-y bg-[#161920] border border-border text-foreground px-4 py-3 rounded-lg text-base focus:outline-none focus:border-primary transition-all"

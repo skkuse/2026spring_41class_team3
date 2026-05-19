@@ -12,18 +12,26 @@ const Landing = () => {
       {state.viewMode === 'landing' && (
         <>
           <LandingHero
+            identityMode={state.identityMode}
+            userIdInput={state.userIdInput}
+            userIdWarning={state.userIdWarning}
+            duplicateCheckMessage={state.duplicateCheckMessage}
+            currentUser={state.currentUser}
+            existingUser={state.existingUser}
+            onUserIdInputChange={actions.handleUserIdInputChange}
+            onCheckDuplicate={actions.handleCheckDuplicate}
+            onAccessExistingUser={actions.handleAccessExistingUser}
+            onSwitchToCreateUser={actions.handleSwitchToCreateUser}
+            onSwitchToAccessUser={actions.handleSwitchToAccessUser}
             onCreateProjectClick={actions.handleCreateProjectClick}
             onJoinProjectClick={actions.handleOpenJoinModal}
           />
           {state.isJoinModalOpen && (
             <JoinProjectModal
-              userId={state.userId}
               projectCode={state.projectCode}
-              idWarning={state.idWarning}
               errorMessage={state.errorMessage}
               isLoading={state.isLoading}
               onClose={actions.handleCloseJoinModal}
-              onUserIdChange={actions.handleUserIdChange}
               onProjectCodeChange={actions.handleProjectCodeChange}
               onSubmit={actions.handleJoinSubmit}
             />
@@ -33,17 +41,14 @@ const Landing = () => {
 
       {state.viewMode === 'create_project' && (
         <CreateProjectForm
-          ownerUserId={state.ownerUserId}
           projectName={state.projectName}
           projectDescription={state.projectDescription}
           projectType={state.projectType}
           projectDeadline={state.projectDeadline}
-          ownerUserIdWarning={state.ownerUserIdWarning}
           errorMessage={state.errorMessage}
           isLoading={state.isLoading}
           onBack={actions.goToLanding}
           onCancel={actions.goToLanding}
-          onOwnerUserIdChange={actions.handleOwnerUserIdChange}
           onProjectNameChange={actions.setProjectName}
           onProjectDescriptionChange={actions.setProjectDescription}
           onProjectTypeChange={actions.setProjectType}

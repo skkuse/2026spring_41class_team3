@@ -1,11 +1,41 @@
 import { PlusCircle } from 'lucide-react';
+import type * as React from 'react';
+import UserIdentityPanel from './UserIdentityPanel';
+import type { UserIdentity, UserIdentityMode } from './types';
 
 interface LandingHeroProps {
+  identityMode: UserIdentityMode;
+  userIdInput: string;
+  userIdWarning: string;
+  duplicateCheckMessage: string;
+  currentUser: UserIdentity | null;
+  existingUser: UserIdentity | null;
+  onUserIdInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onCheckDuplicate: () => void;
+  onAccessExistingUser: () => void;
+  onSwitchToCreateUser: () => void;
+  onSwitchToAccessUser: () => void;
   onCreateProjectClick: () => void;
   onJoinProjectClick: () => void;
 }
 
-const LandingHero = ({ onCreateProjectClick, onJoinProjectClick }: LandingHeroProps) => {
+const LandingHero = ({
+  identityMode,
+  userIdInput,
+  userIdWarning,
+  duplicateCheckMessage,
+  currentUser,
+  existingUser,
+  onUserIdInputChange,
+  onCheckDuplicate,
+  onAccessExistingUser,
+  onSwitchToCreateUser,
+  onSwitchToAccessUser,
+  onCreateProjectClick,
+  onJoinProjectClick,
+}: LandingHeroProps) => {
+  const isUserReady = currentUser !== null;
+
   return (
     <>
       <header className="text-center mb-10">
@@ -24,19 +54,34 @@ const LandingHero = ({ onCreateProjectClick, onJoinProjectClick }: LandingHeroPr
         <p className="text-muted-foreground/80 text-base max-w-[800px] mx-auto mb-12 tracking-tight font-normal">
           AI 기반 워크플로우 관리로 액션 아이템을 추출하고, 실행을 추적하며, 생산성을 향상시킵니다
         </p>
-        <div className="flex gap-4 justify-center mb-24">
+        <UserIdentityPanel
+          mode={identityMode}
+          userIdInput={userIdInput}
+          userIdWarning={userIdWarning}
+          duplicateCheckMessage={duplicateCheckMessage}
+          currentUser={currentUser}
+          existingUser={existingUser}
+          onUserIdInputChange={onUserIdInputChange}
+          onCheckDuplicate={onCheckDuplicate}
+          onAccessExistingUser={onAccessExistingUser}
+          onSwitchToCreateUser={onSwitchToCreateUser}
+          onSwitchToAccessUser={onSwitchToAccessUser}
+        />
+        <div className="flex gap-5 justify-center mb-24 max-sm:flex-col max-sm:items-stretch">
           <button
             type="button"
-            className="bg-primary text-primary-foreground font-semibold px-8 py-3.5 rounded-md hover:opacity-90 text-sm cursor-pointer flex items-center gap-2 transition-all"
+            className="bg-primary text-primary-foreground font-semibold px-10 py-4 rounded-lg hover:opacity-90 text-base cursor-pointer flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed min-w-[220px]"
             onClick={onCreateProjectClick}
+            disabled={!isUserReady}
           >
             <PlusCircle className="w-4 h-4" />
             새 프로젝트 생성
           </button>
           <button
             type="button"
-            className="bg-secondary text-foreground border border-border font-semibold px-8 py-3.5 rounded-md hover:bg-neutral-800 text-sm cursor-pointer"
+            className="bg-secondary text-foreground border border-border font-semibold px-10 py-4 rounded-lg hover:bg-neutral-800 text-base cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-w-[220px]"
             onClick={onJoinProjectClick}
+            disabled={!isUserReady}
           >
             프로젝트 코드로 참여
           </button>

@@ -2,25 +2,19 @@ import type * as React from 'react';
 import { ArrowRight, X } from 'lucide-react';
 
 interface JoinProjectModalProps {
-  userId: string;
   projectCode: string;
-  idWarning: string;
   errorMessage: string;
   isLoading: boolean;
   onClose: () => void;
-  onUserIdChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onProjectCodeChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (event: React.FormEvent) => void;
 }
 
 const JoinProjectModal = ({
-  userId,
   projectCode,
-  idWarning,
   errorMessage,
   isLoading,
   onClose,
-  onUserIdChange,
   onProjectCodeChange,
   onSubmit,
 }: JoinProjectModalProps) => {
@@ -39,23 +33,8 @@ const JoinProjectModal = ({
           <div>
             <h3 className="text-xl font-bold tracking-tight text-foreground">프로젝트 참여하기</h3>
             <p className="text-xs text-muted-foreground mt-1">
-              본인의 고유 ID와 공유받은 10자리 코드를 함께 입력하세요.
+              공유받은 10자리 코드를 입력하세요.
             </p>
-          </div>
-
-          <div className="space-y-1.5 text-left">
-            <label className="text-xs font-semibold text-muted-foreground ml-1">사용자 식별 ID</label>
-            <input
-              type="text"
-              placeholder="User ID (영문/숫자, 최소 3자)"
-              value={userId}
-              onChange={onUserIdChange}
-              autoComplete="off"
-              spellCheck={false}
-              className={`w-full bg-[#161920] border text-foreground px-4 py-2.5 rounded-lg text-base focus:outline-none transition-all ${idWarning ? 'border-destructive focus:border-destructive' : 'border-border focus:border-primary'}`}
-              autoFocus
-            />
-            {idWarning && <p className="text-destructive text-xs font-medium pl-1 mt-1">{idWarning}</p>}
           </div>
 
           <div className="space-y-1.5 text-left">
@@ -69,6 +48,7 @@ const JoinProjectModal = ({
               onChange={onProjectCodeChange}
               className="w-full bg-[#161920] border border-border text-foreground px-4 py-2.5 rounded-lg text-lg focus:outline-none focus:border-primary tracking-[0.15em] font-mono text-center transition-all"
               disabled={isLoading}
+              autoFocus
             />
           </div>
 
@@ -78,7 +58,7 @@ const JoinProjectModal = ({
 
           <button
             type="submit"
-            disabled={isLoading || userId.length < 3 || projectCode.length !== 10 || !!idWarning}
+            disabled={isLoading || projectCode.length !== 10}
             className="w-full bg-primary text-primary-foreground text-sm font-semibold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
             {isLoading ? '프로젝트 조회 및 입장 중...' : '프로젝트 입장'}
