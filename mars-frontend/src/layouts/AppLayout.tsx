@@ -1,28 +1,42 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+
+const loginUserId = '98cb2c1a';
+const currentProjectName = '2026 Spring Team 3';
 
 const navItems = [
   {
-    label: 'Dashboard',
+    label: '대시보드',
     path: '/dashboard',
   },
   {
-    label: 'Meetings',
-    path: '/meeting/new',
+    label: '회의',
+    path: '/meetings',
   },
   {
-    label: 'Action Items',
+    label: '지난 회의',
+    path: '/meetings/past',
+  },
+  {
+    label: '액션 아이템',
     path: '/actions',
   },
   {
-    label: 'Suggestions',
+    label: '제안',
     path: '/suggestions',
+  },
+  {
+    label: '스타일',
+    path: '/style-guide',
   },
 ];
 
 function AppLayout() {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      <aside className="flex w-60 flex-col border-r border-border bg-sidebar">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+      <aside className="flex h-full w-60 shrink-0 flex-col border-r border-border bg-sidebar">
         <div className="border-b border-border px-6 py-5">
           <h1 className="text-3xl font-semibold tracking-wide text-primary">
             MARS
@@ -37,6 +51,7 @@ function AppLayout() {
             <NavLink
               key={item.path}
               to={item.path}
+              end
               className={({ isActive }) =>
                 [
                   'rounded-lg px-4 py-3 text-sm transition',
@@ -51,14 +66,33 @@ function AppLayout() {
           ))}
         </nav>
 
-        <div className="border-t border-border px-6 py-4">
-          <p className="text-xs uppercase text-muted-foreground">
-            사용자 명
-          </p>
+        <div className="space-y-4 border-t border-border px-6 py-4">
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
+            onClick={() => navigate('/')}
+          >
+            <LogOut className="h-4 w-4" />
+            프로젝트 나가기
+          </button>
+
+          <div className="space-y-2 text-xs text-muted-foreground">
+            <div>
+              {/* 상태 받아오기 필요 */}
+              <p className="uppercase">로그인 ID</p>  
+              <p className="mt-1 truncate text-foreground">{loginUserId}</p>
+            </div>
+            <div>
+              <p className="uppercase">현재 프로젝트</p>
+              <p className="mt-1 truncate text-foreground">
+                {currentProjectName}
+              </p>
+            </div>
+          </div>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="min-w-0 flex-1 overflow-y-auto">
         <Outlet />
       </main>
     </div>
