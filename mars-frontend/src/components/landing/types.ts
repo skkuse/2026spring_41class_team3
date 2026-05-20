@@ -12,5 +12,6 @@ export interface ProjectNavigationState {
 
 export interface UserIdentity {
   id: string;
+  name: string;
   uuid: string;
 }

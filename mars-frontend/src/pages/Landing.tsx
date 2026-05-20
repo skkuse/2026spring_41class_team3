@@ -14,11 +14,13 @@ const Landing = () => {
           <LandingHero
             identityMode={state.identityMode}
             userIdInput={state.userIdInput}
+            userNameInput={state.userNameInput}
             userIdWarning={state.userIdWarning}
             duplicateCheckMessage={state.duplicateCheckMessage}
             currentUser={state.currentUser}
             isUserIdAvailable={state.isUserIdAvailable}
             onUserIdInputChange={actions.handleUserIdInputChange}
+            onUserNameInputChange={actions.handleUserNameInputChange}
             onCheckDuplicate={actions.handleCheckDuplicate}
             onCreateUser={actions.handleCreateUser}
             onAccessExistingUser={actions.handleAccessExistingUser}

@@ -6,11 +6,13 @@ import type { UserIdentity, UserIdentityMode } from './types';
 interface LandingHeroProps {
   identityMode: UserIdentityMode;
   userIdInput: string;
+  userNameInput: string;
   userIdWarning: string;
   duplicateCheckMessage: string;
   currentUser: UserIdentity | null;
   isUserIdAvailable: boolean;
   onUserIdInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onUserNameInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onCheckDuplicate: () => void;
   onCreateUser: () => void;
   onAccessExistingUser: () => void;
@@ -23,11 +25,13 @@ interface LandingHeroProps {
 const LandingHero = ({
   identityMode,
   userIdInput,
+  userNameInput,
   userIdWarning,
   duplicateCheckMessage,
   currentUser,
   isUserIdAvailable,
   onUserIdInputChange,
+  onUserNameInputChange,
   onCheckDuplicate,
   onCreateUser,
   onAccessExistingUser,
@@ -59,11 +63,13 @@ const LandingHero = ({
         <UserIdentityPanel
           mode={identityMode}
           userIdInput={userIdInput}
+          userNameInput={userNameInput}
           userIdWarning={userIdWarning}
           duplicateCheckMessage={duplicateCheckMessage}
           currentUser={currentUser}
           isUserIdAvailable={isUserIdAvailable}
           onUserIdInputChange={onUserIdInputChange}
+          onUserNameInputChange={onUserNameInputChange}
           onCheckDuplicate={onCheckDuplicate}
           onCreateUser={onCreateUser}
           onAccessExistingUser={onAccessExistingUser}

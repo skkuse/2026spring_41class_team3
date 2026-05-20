@@ -5,11 +5,13 @@ import type { UserIdentity, UserIdentityMode } from './types';
 interface UserIdentityPanelProps {
   mode: UserIdentityMode;
   userIdInput: string;
+  userNameInput: string;
   userIdWarning: string;
   duplicateCheckMessage: string;
   currentUser: UserIdentity | null;
   isUserIdAvailable: boolean;
   onUserIdInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onUserNameInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onCheckDuplicate: () => void;
   onCreateUser: () => void;
   onAccessExistingUser: () => void;
@@ -20,11 +22,13 @@ interface UserIdentityPanelProps {
 const UserIdentityPanel = ({
   mode,
   userIdInput,
+  userNameInput,
   userIdWarning,
   duplicateCheckMessage,
   currentUser,
   isUserIdAvailable,
   onUserIdInputChange,
+  onUserNameInputChange,
   onCheckDuplicate,
   onCreateUser,
   onAccessExistingUser,
@@ -45,6 +49,7 @@ const UserIdentityPanel = ({
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">접속한 사용자</p>
               <p className="text-sm font-bold text-foreground truncate">{currentUser.id}</p>
+              <p className="text-xs text-muted-foreground truncate">{currentUser.name}</p>
             </div>
           </div>
           <button
@@ -97,12 +102,25 @@ const UserIdentityPanel = ({
           <button
             type="button"
             onClick={onCreateUser}
-            className="bg-primary text-primary-foreground text-sm font-semibold px-4 py-3 rounded-lg hover:opacity-90 transition-all cursor-pointer whitespace-nowrap"
+            disabled={!userNameInput.trim()}
+            className="bg-primary text-primary-foreground text-sm font-semibold px-4 py-3 rounded-lg hover:opacity-90 transition-all cursor-pointer whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
           >
             계정 생성
           </button>
         )}
       </div>
+
+      {isCreateMode && (
+        <input
+          type="text"
+          value={userNameInput}
+          onChange={onUserNameInputChange}
+          placeholder="이름"
+          autoComplete="name"
+          spellCheck={false}
+          className="mt-2 w-full bg-[#161920] border border-border text-foreground px-4 py-3 rounded-lg text-base focus:outline-none focus:border-primary transition-all"
+        />
+      )}
 
       <div className="min-h-5 mt-2">
         {userIdWarning && <p className="text-destructive text-xs font-medium">{userIdWarning}</p>}

@@ -80,9 +80,10 @@ export const useLandingPage = () => {
 
   const [identityMode, setIdentityMode] = useState<UserIdentityMode>('access');
   const [currentUser, setCurrentUser] = useState<UserIdentity | null>(null);
-  const [userRegistry, setUserRegistry] = useState<Record<string, string>>({});
+  const [userRegistry, setUserRegistry] = useState<Record<string, UserIdentity>>({});
   const [availableUserId, setAvailableUserId] = useState('');
   const [userIdInput, setUserIdInput] = useState('');
+  const [userNameInput, setUserNameInput] = useState('');
   const [projectCode, setProjectCode] = useState('');
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
@@ -145,6 +146,10 @@ export const useLandingPage = () => {
     }
   };
 
+  const handleUserNameInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setUserNameInput(event.target.value);
+  };
+
   const handleCheckDuplicate = () => {
     logButtonClick('중복 확인', READ_USER_API);
 
@@ -158,9 +163,9 @@ export const useLandingPage = () => {
       return;
     }
 
-    const registeredUuid = userRegistry[normalizedUserId];
+    const registeredUser = userRegistry[normalizedUserId];
 
-    if (registeredUuid) {
+    if (registeredUser) {
       logApiSkipped('중복 확인', READ_USER_API, '조회 결과: 이미 존재하는 아이디');
       resetIdentityPrompt();
       setDuplicateCheckMessage('이미 사용 중인 아이디입니다. 접속하기를 이용해 주세요.');
@@ -177,24 +182,32 @@ export const useLandingPage = () => {
     logButtonClick('계정 생성', CREATE_USER_API);
 
     const normalizedUserId = userIdInput.trim();
+    const normalizedUserName = userNameInput.trim();
 
     if (!availableUserId || availableUserId !== normalizedUserId) {
       setDuplicateCheckMessage('먼저 중복 확인을 완료해 주세요.');
       return;
     }
 
+    if (!normalizedUserName) {
+      setDuplicateCheckMessage('이름을 입력해 주세요.');
+      return;
+    }
+
     const user = {
       id: normalizedUserId,
+      name: normalizedUserName,
       uuid: crypto.randomUUID(),
     };
 
     setUserRegistry((registry) => ({
       ...registry,
-      [user.id]: user.uuid,
+      [user.id]: user,
     }));
     logApiSkipped('계정 생성', CREATE_USER_API, {
-      userId: user.id,
-      userUuid: user.uuid,
+      username: user.id,
+      name: user.name,
+      user_id: user.uuid,
     });
     setCurrentUser(user);
     setAvailableUserId('');
@@ -215,9 +228,9 @@ export const useLandingPage = () => {
       return;
     }
 
-    const registeredUuid = userRegistry[normalizedUserId];
+    const registeredUser = userRegistry[normalizedUserId];
 
-    if (!registeredUuid) {
+    if (!registeredUser) {
       logApiSkipped('접속', READ_USER_API, '현재 세션에 등록된 아이디 없음');
       setCurrentUser(null);
       setAvailableUserId('');
@@ -225,12 +238,7 @@ export const useLandingPage = () => {
       return;
     }
 
-    const user = {
-      id: normalizedUserId,
-      uuid: registeredUuid,
-    };
-
-    setCurrentUser(user);
+    setCurrentUser(registeredUser);
     setAvailableUserId('');
     setDuplicateCheckMessage('기존 아이디로 접속되었습니다.');
   };
@@ -384,6 +392,7 @@ export const useLandingPage = () => {
       currentUser,
       isUserIdAvailable: availableUserId === userIdInput.trim(),
       userIdInput,
+      userNameInput,
       projectCode,
       projectName,
       projectDescription,
@@ -400,6 +409,7 @@ export const useLandingPage = () => {
       handleOpenJoinModal,
       handleCloseJoinModal,
       handleUserIdInputChange,
+      handleUserNameInputChange,
       handleCheckDuplicate,
       handleCreateUser,
       handleAccessExistingUser,
