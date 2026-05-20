@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import type { LandingViewMode, ProjectNavigationState, UserIdentity, UserIdentityMode } from './types';
 
 const USER_ID_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{3,}$/;
-const USER_REGISTRY_STORAGE_KEY = 'mars:user-registry';
-const CURRENT_USER_STORAGE_KEY = 'mars:current-user';
 const CREATE_USER_API = 'POST /users/';
 const READ_USER_API = 'GET /users/{user_id}';
 const CREATE_PROJECT_API = 'POST /projects/';
@@ -27,45 +25,6 @@ const logApiSkipped = (buttonName: string, api: string, detail?: unknown) => {
   });
 };
 
-const readUserRegistry = () => {
-  const storedRegistry = window.localStorage.getItem(USER_REGISTRY_STORAGE_KEY);
-
-  if (!storedRegistry) {
-    return {} as Record<string, string>;
-  }
-
-  try {
-    return JSON.parse(storedRegistry) as Record<string, string>;
-  } catch {
-    return {} as Record<string, string>;
-  }
-};
-
-const readCurrentUser = () => {
-  const storedUser = window.localStorage.getItem(CURRENT_USER_STORAGE_KEY);
-
-  if (!storedUser) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(storedUser) as UserIdentity;
-  } catch {
-    return null;
-  }
-};
-
-const saveUserIdentity = (user: UserIdentity) => {
-  const registry = readUserRegistry();
-  const nextRegistry = {
-    ...registry,
-    [user.id]: user.uuid,
-  };
-
-  window.localStorage.setItem(USER_REGISTRY_STORAGE_KEY, JSON.stringify(nextRegistry));
-  window.localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(user));
-};
-
 const validateUserId = (value: string) => {
   if (!value) {
     return '';
@@ -77,8 +36,6 @@ const validateUserId = (value: string) => {
 
   return '';
 };
-
-const getInitialUser = () => readCurrentUser();
 
 const getProjectValidationMessage = ({
   projectName,
@@ -114,7 +71,6 @@ const getProjectValidationMessage = ({
 
 export const useLandingPage = () => {
   const navigate = useNavigate();
-  const [initialUser] = useState(getInitialUser);
 
   const [viewMode, setViewMode] = useState<LandingViewMode>('landing');
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
@@ -123,9 +79,10 @@ export const useLandingPage = () => {
   const [isCopied, setIsCopied] = useState(false);
 
   const [identityMode, setIdentityMode] = useState<UserIdentityMode>('access');
-  const [currentUser, setCurrentUser] = useState<UserIdentity | null>(initialUser);
+  const [currentUser, setCurrentUser] = useState<UserIdentity | null>(null);
+  const [userRegistry, setUserRegistry] = useState<Record<string, string>>({});
   const [availableUserId, setAvailableUserId] = useState('');
-  const [userIdInput, setUserIdInput] = useState(initialUser?.id ?? '');
+  const [userIdInput, setUserIdInput] = useState('');
   const [projectCode, setProjectCode] = useState('');
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
@@ -201,8 +158,7 @@ export const useLandingPage = () => {
       return;
     }
 
-    const registry = readUserRegistry();
-    const registeredUuid = registry[normalizedUserId];
+    const registeredUuid = userRegistry[normalizedUserId];
 
     if (registeredUuid) {
       logApiSkipped('중복 확인', READ_USER_API, '조회 결과: 이미 존재하는 아이디');
@@ -232,15 +188,18 @@ export const useLandingPage = () => {
       uuid: crypto.randomUUID(),
     };
 
-    saveUserIdentity(user);
+    setUserRegistry((registry) => ({
+      ...registry,
+      [user.id]: user.uuid,
+    }));
     logApiSkipped('계정 생성', CREATE_USER_API, {
       userId: user.id,
       userUuid: user.uuid,
     });
-    setCurrentUser(null);
+    setCurrentUser(user);
     setAvailableUserId('');
     setIdentityMode('access');
-    setDuplicateCheckMessage('계정이 생성되었습니다. 접속 버튼으로 로그인해 주세요.');
+    setDuplicateCheckMessage('계정이 생성되어 바로 접속되었습니다.');
   };
 
   const handleAccessExistingUser = () => {
@@ -256,11 +215,10 @@ export const useLandingPage = () => {
       return;
     }
 
-    const registry = readUserRegistry();
-    const registeredUuid = registry[normalizedUserId];
+    const registeredUuid = userRegistry[normalizedUserId];
 
     if (!registeredUuid) {
-      logApiSkipped('접속', READ_USER_API, '로컬에 등록된 아이디 없음');
+      logApiSkipped('접속', READ_USER_API, '현재 세션에 등록된 아이디 없음');
       setCurrentUser(null);
       setAvailableUserId('');
       setDuplicateCheckMessage('등록된 아이디가 없습니다.');
@@ -272,7 +230,6 @@ export const useLandingPage = () => {
       uuid: registeredUuid,
     };
 
-    saveUserIdentity(user);
     setCurrentUser(user);
     setAvailableUserId('');
     setDuplicateCheckMessage('기존 아이디로 접속되었습니다.');
