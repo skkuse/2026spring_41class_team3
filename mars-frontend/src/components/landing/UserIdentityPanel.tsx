@@ -10,6 +10,7 @@ interface UserIdentityPanelProps {
   duplicateCheckMessage: string;
   currentUser: UserIdentity | null;
   isUserIdAvailable: boolean;
+  isLoading: boolean;
   onUserIdInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onUserNameInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onCheckDuplicate: () => void;
@@ -27,6 +28,7 @@ const UserIdentityPanel = ({
   duplicateCheckMessage,
   currentUser,
   isUserIdAvailable,
+  isLoading,
   onUserIdInputChange,
   onUserNameInputChange,
   onCheckDuplicate,
@@ -93,16 +95,24 @@ const UserIdentityPanel = ({
         <button
           type="button"
           onClick={isCreateMode ? onCheckDuplicate : onAccessExistingUser}
-          disabled={isCreateMode && isUserIdAvailable}
+          disabled={isLoading || (isCreateMode && isUserIdAvailable)}
           className="bg-secondary text-foreground border border-border text-sm font-semibold px-4 py-3 rounded-lg hover:bg-neutral-800 transition-all cursor-pointer whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {isCreateMode && isUserIdAvailable ? '확인 완료' : isCreateMode ? '중복 확인' : '접속'}
+          {isLoading && isCreateMode
+            ? '확인 중...'
+            : isLoading
+              ? '접속 중...'
+            : isCreateMode && isUserIdAvailable
+              ? '확인 완료'
+              : isCreateMode
+                ? '중복 확인'
+                : '접속'}
         </button>
         {isCreateMode && isUserIdAvailable && (
           <button
             type="button"
             onClick={onCreateUser}
-            disabled={!userNameInput.trim()}
+            disabled={isLoading || !userNameInput.trim()}
             className="bg-primary text-primary-foreground text-sm font-semibold px-4 py-3 rounded-lg hover:opacity-90 transition-all cursor-pointer whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
           >
             계정 생성

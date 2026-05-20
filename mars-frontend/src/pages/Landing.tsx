@@ -19,6 +19,7 @@ const Landing = () => {
             duplicateCheckMessage={state.duplicateCheckMessage}
             currentUser={state.currentUser}
             isUserIdAvailable={state.isUserIdAvailable}
+            isLoading={state.isLoading}
             onUserIdInputChange={actions.handleUserIdInputChange}
             onUserNameInputChange={actions.handleUserNameInputChange}
             onCheckDuplicate={actions.handleCheckDuplicate}

@@ -1,29 +1,11 @@
 import type * as React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ApiError, checkUserAvailability, createUser, loginUser } from '../../lib/api';
+import type { UserResponse } from '../../lib/api';
 import type { LandingViewMode, ProjectNavigationState, UserIdentity, UserIdentityMode } from './types';
 
 const USER_ID_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{3,}$/;
-const CREATE_USER_API = 'POST /users/';
-const READ_USER_API = 'GET /users/{user_id}';
-const CREATE_PROJECT_API = 'POST /projects/';
-const PROJECT_JOIN_API = 'POST /projects/{project_id}/members';
-
-const logButtonClick = (buttonName: string, api?: string) => {
-  console.log('[Landing][Button]', {
-    button: buttonName,
-    api: api ?? '-',
-  });
-};
-
-const logApiSkipped = (buttonName: string, api: string, detail?: unknown) => {
-  console.log('[Landing][API]', {
-    button: buttonName,
-    api,
-    result: 'skipped',
-    detail: detail ?? 'API 연결 전: 로그만 확인',
-  });
-};
 
 const validateUserId = (value: string) => {
   if (!value) {
@@ -35,6 +17,82 @@ const validateUserId = (value: string) => {
   }
 
   return '';
+};
+
+const getNetworkErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+
+    if (message.includes('timeout') || message.includes('초과')) {
+      return '요청 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.';
+    }
+
+    if (message.includes('failed to fetch') || message.includes('network')) {
+      return '서버에 연결할 수 없습니다. 네트워크 상태를 확인해 주세요.';
+    }
+  }
+
+  return '';
+};
+
+const toUserIdentity = (user: UserResponse): UserIdentity => ({
+  id: user.username,
+  name: user.name,
+  uuid: user.id,
+});
+
+const getAvailabilityErrorMessage = (error: unknown) => {
+  if (error instanceof ApiError && error.status === 422) {
+    return '아이디 형식이 올바르지 않습니다. 입력값을 다시 확인해 주세요.';
+  }
+
+  const networkMessage = getNetworkErrorMessage(error);
+
+  if (networkMessage) {
+    return networkMessage;
+  }
+
+  return '중복 확인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+};
+
+const getCreateUserErrorMessage = (error: unknown) => {
+  if (error instanceof ApiError) {
+    if (error.status === 409) {
+      return '이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.';
+    }
+
+    if (error.status === 422) {
+      return '입력한 정보를 다시 확인해 주세요.';
+    }
+  }
+
+  const networkMessage = getNetworkErrorMessage(error);
+
+  if (networkMessage) {
+    return networkMessage;
+  }
+
+  return '계정 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+};
+
+const getLoginUserErrorMessage = (error: unknown) => {
+  if (error instanceof ApiError) {
+    if (error.status === 404) {
+      return '입력한 아이디를 찾을 수 없습니다. 처음이라면 새 아이디를 만들어 주세요.';
+    }
+
+    if (error.status === 422) {
+      return '아이디 형식이 올바르지 않습니다. 입력값을 다시 확인해 주세요.';
+    }
+  }
+
+  const networkMessage = getNetworkErrorMessage(error);
+
+  if (networkMessage) {
+    return networkMessage;
+  }
+
+  return '접속에 실패했습니다. 잠시 후 다시 시도해 주세요.';
 };
 
 const getProjectValidationMessage = ({
@@ -80,7 +138,6 @@ export const useLandingPage = () => {
 
   const [identityMode, setIdentityMode] = useState<UserIdentityMode>('access');
   const [currentUser, setCurrentUser] = useState<UserIdentity | null>(null);
-  const [userRegistry, setUserRegistry] = useState<Record<string, UserIdentity>>({});
   const [availableUserId, setAvailableUserId] = useState('');
   const [userIdInput, setUserIdInput] = useState('');
   const [userNameInput, setUserNameInput] = useState('');
@@ -124,8 +181,6 @@ export const useLandingPage = () => {
   };
 
   const handleCreateProjectClick = () => {
-    logButtonClick('새 프로젝트 생성');
-
     if (!currentUser) {
       setDuplicateCheckMessage('먼저 사용자 아이디로 접속하거나 새 아이디를 만들어 주세요.');
       return;
@@ -150,9 +205,7 @@ export const useLandingPage = () => {
     setUserNameInput(event.target.value);
   };
 
-  const handleCheckDuplicate = () => {
-    logButtonClick('중복 확인', READ_USER_API);
-
+  const handleCheckDuplicate = async () => {
     const normalizedUserId = userIdInput.trim();
     const warning = validateUserId(normalizedUserId);
 
@@ -163,24 +216,30 @@ export const useLandingPage = () => {
       return;
     }
 
-    const registeredUser = userRegistry[normalizedUserId];
+    setIsLoading(true);
+    setDuplicateCheckMessage('아이디 사용 가능 여부를 확인하고 있습니다.');
 
-    if (registeredUser) {
-      logApiSkipped('중복 확인', READ_USER_API, '조회 결과: 이미 존재하는 아이디');
+    try {
+      const { available } = await checkUserAvailability(normalizedUserId);
+
+      if (!available) {
+        resetIdentityPrompt();
+        setDuplicateCheckMessage('이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.');
+        return;
+      }
+
+      setCurrentUser(null);
+      setAvailableUserId(normalizedUserId);
+      setDuplicateCheckMessage('사용 가능한 아이디입니다. 계정 생성을 눌러 주세요.');
+    } catch (error) {
       resetIdentityPrompt();
-      setDuplicateCheckMessage('이미 사용 중인 아이디입니다. 접속하기를 이용해 주세요.');
-      return;
+      setDuplicateCheckMessage(getAvailabilityErrorMessage(error));
+    } finally {
+      setIsLoading(false);
     }
-
-    setCurrentUser(null);
-    setAvailableUserId(normalizedUserId);
-    logApiSkipped('중복 확인', READ_USER_API, '조회 결과: 사용 가능한 아이디');
-    setDuplicateCheckMessage('사용 가능한 아이디입니다. 계정 생성을 눌러 주세요.');
   };
 
-  const handleCreateUser = () => {
-    logButtonClick('계정 생성', CREATE_USER_API);
-
+  const handleCreateUser = async () => {
     const normalizedUserId = userIdInput.trim();
     const normalizedUserName = userNameInput.trim();
 
@@ -194,30 +253,32 @@ export const useLandingPage = () => {
       return;
     }
 
-    const user = {
-      id: normalizedUserId,
-      name: normalizedUserName,
-      uuid: crypto.randomUUID(),
-    };
+    setIsLoading(true);
+    setDuplicateCheckMessage('계정을 생성하고 있습니다.');
 
-    setUserRegistry((registry) => ({
-      ...registry,
-      [user.id]: user,
-    }));
-    logApiSkipped('계정 생성', CREATE_USER_API, {
-      username: user.id,
-      name: user.name,
-      user_id: user.uuid,
-    });
-    setCurrentUser(user);
-    setAvailableUserId('');
-    setIdentityMode('access');
-    setDuplicateCheckMessage('계정이 생성되어 바로 접속되었습니다.');
+    try {
+      const createdUser = await createUser({
+        username: normalizedUserId,
+        name: normalizedUserName,
+        role: null,
+      });
+      const user = toUserIdentity(createdUser);
+
+      setCurrentUser(user);
+      setAvailableUserId('');
+      setIdentityMode('access');
+      setDuplicateCheckMessage('계정이 생성되어 바로 접속되었습니다.');
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        resetUserAvailability();
+      }
+      setDuplicateCheckMessage(getCreateUserErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleAccessExistingUser = () => {
-    logButtonClick('접속', READ_USER_API);
-
+  const handleAccessExistingUser = async () => {
     const normalizedUserId = userIdInput.trim();
     const warning = validateUserId(normalizedUserId);
 
@@ -228,32 +289,31 @@ export const useLandingPage = () => {
       return;
     }
 
-    const registeredUser = userRegistry[normalizedUserId];
+    setIsLoading(true);
+    setDuplicateCheckMessage('접속하고 있습니다.');
 
-    if (!registeredUser) {
-      logApiSkipped('접속', READ_USER_API, '현재 세션에 등록된 아이디 없음');
+    try {
+      const user = toUserIdentity(await loginUser(normalizedUserId));
+
+      setCurrentUser(user);
+      setAvailableUserId('');
+      setDuplicateCheckMessage('기존 아이디로 접속되었습니다.');
+    } catch (error) {
       setCurrentUser(null);
       setAvailableUserId('');
-      setDuplicateCheckMessage('등록된 아이디가 없습니다.');
-      return;
+      setDuplicateCheckMessage(getLoginUserErrorMessage(error));
+    } finally {
+      setIsLoading(false);
     }
-
-    setCurrentUser(registeredUser);
-    setAvailableUserId('');
-    setDuplicateCheckMessage('기존 아이디로 접속되었습니다.');
   };
 
   const handleSwitchToCreateUser = () => {
-    logButtonClick('처음이신가요? 새 아이디 만들기');
-
     setIdentityMode('create');
     resetIdentityPrompt();
     setUserIdWarning(validateUserId(userIdInput));
   };
 
   const handleSwitchToAccessUser = () => {
-    logButtonClick('접속하기');
-
     setIdentityMode('access');
     resetIdentityPrompt();
     setUserIdWarning(validateUserId(userIdInput));
@@ -264,8 +324,6 @@ export const useLandingPage = () => {
   };
 
   const handleOpenJoinModal = () => {
-    logButtonClick('프로젝트 코드로 참여');
-
     if (!currentUser) {
       setDuplicateCheckMessage('먼저 사용자 아이디로 접속하거나 새 아이디를 만들어 주세요.');
       return;
@@ -277,13 +335,11 @@ export const useLandingPage = () => {
   };
 
   const handleCloseJoinModal = () => {
-    logButtonClick('프로젝트 참여 모달 닫기');
     setIsJoinModalOpen(false);
   };
 
   const handleJoinSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    logButtonClick('프로젝트 입장', PROJECT_JOIN_API);
 
     if (!currentUser) {
       setErrorMessage('먼저 사용자 아이디로 접속하거나 새 아이디를 만들어 주세요.');
@@ -297,10 +353,6 @@ export const useLandingPage = () => {
 
     setErrorMessage('');
     setIsJoinModalOpen(false);
-    logApiSkipped('프로젝트 입장', PROJECT_JOIN_API, {
-      project_id: projectCode,
-      user_id: currentUser.uuid,
-    });
     navigate('/dashboard', {
       state: {
         userId: currentUser.id,
@@ -312,7 +364,6 @@ export const useLandingPage = () => {
 
   const handleCreateProjectSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    logButtonClick('프로젝트 생성 및 입장', CREATE_PROJECT_API);
 
     if (!currentUser) {
       setErrorMessage('먼저 사용자 아이디로 접속하거나 새 아이디를 만들어 주세요.');
@@ -325,7 +376,6 @@ export const useLandingPage = () => {
       projectType,
       projectDeadline,
     });
-    const deadlineDate = new Date(projectDeadline);
 
     if (validationMessage) {
       setErrorMessage(validationMessage);
@@ -336,14 +386,6 @@ export const useLandingPage = () => {
     setErrorMessage('');
 
     const localProjectId = crypto.randomUUID();
-
-    logApiSkipped('프로젝트 생성 및 입장', CREATE_PROJECT_API, {
-      name: projectName.trim(),
-      owner_user_id: currentUser.uuid,
-      description: projectDescription.trim(),
-      project_type: projectType.trim(),
-      deadline: deadlineDate.toISOString(),
-    });
 
     setCreatedProjectId(localProjectId);
     setIsCopied(false);
@@ -360,20 +402,16 @@ export const useLandingPage = () => {
   };
 
   const handleCopyCode = async () => {
-    logButtonClick('프로젝트 ID 복사');
-
     try {
       await navigator.clipboard.writeText(createdProjectId);
       setIsCopied(true);
       window.setTimeout(() => setIsCopied(false), 2000);
-    } catch (error) {
-      console.error('코드 복사에 실패했습니다.', error);
+    } catch {
+      setErrorMessage('코드 복사에 실패했습니다. 다시 시도해 주세요.');
     }
   };
 
   const handleCloseSuccessAndNavigate = () => {
-    logButtonClick('대시보드로 입장하기');
-
     setIsSuccessModalOpen(false);
 
     if (pendingNavigateData) {
