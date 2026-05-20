@@ -32,8 +32,8 @@ def read_user(user_id: uuid.UUID, db: Session = Depends(get_db)):
 def check_username_availability(username: str, db: Session = Depends(get_db)):
     existing_user = get_user_by_username(db, username)
     if existing_user:
-        raise HTTPException(status_code=400, detail="이미 사용 중인 username입니다")
-    return {"message": "사용 가능한 username입니다"}
+        return {"available": False}
+    return {"available": True}
 
 @router.delete("/users/{user_id}", summary="유저 삭제")
 def delete_user_api(user_id: uuid.UUID, db: Session = Depends(get_db)):
@@ -45,6 +45,11 @@ def login_user(username: str, db: Session = Depends(get_db)):
     user = get_user_by_username(db, username)
     if not user:
         raise HTTPException(status_code=404, detail="존재하지 않는 username입니다")
-    return {"message": "로그인 성공", "username": user.username, "name": user.name}
+    return {
+        "message": "로그인 성공",
+        "user_id": user.id,
+        "username": user.username,
+        "name": user.name
+    }
 
 
