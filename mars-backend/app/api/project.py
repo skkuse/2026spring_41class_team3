@@ -35,7 +35,7 @@ def add_project_member(project_id: uuid.UUID, body: AddMemberRequest, db: Sessio
 def get_project_member(project_id: uuid.UUID, db: Session = Depends(get_db)):
     return get_members(db, project_id)
 
-# 프로젝트 삭제 API
+
 @router.delete("/projects/{project_id}", summary="프로젝트 삭제")
 def delete_project_api(project_id: uuid.UUID, db: Session = Depends(get_db)):
     from app.crud import delete_project

@@ -28,11 +28,23 @@ def read_user(user_id: uuid.UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
-# 유저 삭제 API
+@router.get("/users/check-username/{username}", summary="username 중복확인")
+def check_username_availability(username: str, db: Session = Depends(get_db)):
+    existing_user = get_user_by_username(db, username)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="이미 사용 중인 username입니다")
+    return {"message": "사용 가능한 username입니다"}
+
 @router.delete("/users/{user_id}", summary="유저 삭제")
 def delete_user_api(user_id: uuid.UUID, db: Session = Depends(get_db)):
     from app.crud import delete_user
     return delete_user(db, user_id)
 
+@router.post("/users/login", summary="로그인 (username)")
+def login_user(username: str, db: Session = Depends(get_db)):
+    user = get_user_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=404, detail="존재하지 않는 username입니다")
+    return {"message": "로그인 성공", "username": user.username, "name": user.name}
 
-    
+
