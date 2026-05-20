@@ -88,9 +88,10 @@ const UserIdentityPanel = ({
         <button
           type="button"
           onClick={isCreateMode ? onCheckDuplicate : onAccessExistingUser}
-          className="bg-secondary text-foreground border border-border text-sm font-semibold px-4 py-3 rounded-lg hover:bg-neutral-800 transition-all cursor-pointer whitespace-nowrap"
+          disabled={isCreateMode && isUserIdAvailable}
+          className="bg-secondary text-foreground border border-border text-sm font-semibold px-4 py-3 rounded-lg hover:bg-neutral-800 transition-all cursor-pointer whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {isCreateMode ? '중복 확인' : '접속'}
+          {isCreateMode && isUserIdAvailable ? '확인 완료' : isCreateMode ? '중복 확인' : '접속'}
         </button>
         {isCreateMode && isUserIdAvailable && (
           <button
@@ -128,7 +129,7 @@ const UserIdentityPanel = ({
         <button
           type="button"
           onClick={onSwitchToCreateUser}
-          className="mt-1 text-xs font-semibold text-chart-3 hover:underline transition-all cursor-pointer"
+          className="mt-1 text-xs font-semibold text-muted-foreground hover:underline transition-all cursor-pointer"
         >
           처음이신가요?
         </button>
