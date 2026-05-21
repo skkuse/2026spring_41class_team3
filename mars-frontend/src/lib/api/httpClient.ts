@@ -1,5 +1,6 @@
 import { API_BASE_URL, API_REQUEST_TIMEOUT_MS } from './config';
 import { ApiError, type ApiRequestOptions } from './types';
+import { getStoredUserUuid } from '../authCookie';
 
 const buildApiUrl = (path: string) => {
   const baseUrl = API_BASE_URL.replace(/\/$/, '');
@@ -27,7 +28,7 @@ export const apiRequest = async <TResponse>(
     const response = await fetch(url, {
       ...requestOptions,
       method,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : JSON.stringify(withStoredUserUuid(path, body)),
       headers: {
         Accept: 'application/json',
         ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
@@ -74,6 +75,35 @@ export const apiRequest = async <TResponse>(
   } finally {
     window.clearTimeout(timeoutId);
   }
+};
+
+const withStoredUserUuid = (path: string, body: unknown) => {
+  if (!isPlainObject(body) || !shouldAttachUserUuid(path, body)) {
+    return body;
+  }
+
+  const userUuid = getStoredUserUuid();
+
+  if (!userUuid) {
+    return body;
+  }
+
+  return {
+    ...body,
+    user_id: userUuid,
+  };
+};
+
+const shouldAttachUserUuid = (path: string, body: Record<string, unknown>) => {
+  if (path.startsWith('/users/')) {
+    return false;
+  }
+
+  return !('user_id' in body) && !('user_uuid' in body) && !('owner_user_id' in body);
+};
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
 const parseResponseBody = async (response: Response) => {

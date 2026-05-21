@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiError, checkUserAvailability, createUser, loginUser } from '../../lib/api';
 import type { UserResponse } from '../../lib/api';
+import { setStoredUserUuid } from '../../lib/authCookie';
 import type { LandingViewMode, ProjectNavigationState, UserIdentity, UserIdentityMode } from './types';
 
 const USER_ID_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{3,}$/;
@@ -40,6 +41,10 @@ const toUserIdentity = (user: UserResponse): UserIdentity => ({
   name: user.name,
   uuid: user.id,
 });
+
+const storeUserIdentity = (user: UserIdentity) => {
+  setStoredUserUuid(user.uuid);
+};
 
 const getAvailabilityErrorMessage = (error: unknown) => {
   if (error instanceof ApiError && error.status === 422) {
@@ -264,6 +269,7 @@ export const useLandingPage = () => {
       });
       const user = toUserIdentity(createdUser);
 
+      storeUserIdentity(user);
       setCurrentUser(user);
       setAvailableUserId('');
       setIdentityMode('access');
@@ -295,6 +301,7 @@ export const useLandingPage = () => {
     try {
       const user = toUserIdentity(await loginUser(normalizedUserId));
 
+      storeUserIdentity(user);
       setCurrentUser(user);
       setAvailableUserId('');
       setDuplicateCheckMessage('기존 아이디로 접속되었습니다.');
