@@ -1,4 +1,4 @@
-import { PlusCircle } from 'lucide-react';
+import { CheckCircle2, FileText, PlusCircle, UsersRound } from 'lucide-react';
 import type * as React from 'react';
 import UserIdentityPanel from './UserIdentityPanel';
 import type { UserIdentity, UserIdentityMode } from './types';
@@ -43,25 +43,38 @@ const LandingHero = ({
   onJoinProjectClick,
 }: LandingHeroProps) => {
   const isUserReady = currentUser !== null;
+  const featureHighlights = [
+    { icon: FileText, label: '회의록 분석' },
+    { icon: CheckCircle2, label: '액션 아이템 추출' },
+    { icon: UsersRound, label: '담당자·마감일 추적' },
+  ];
 
   return (
     <>
-      <header className="text-center mb-10">
-        <h1 className="text-6xl font-extrabold tracking-wider m-0 bg-gradient-to-r from-[#FF8A65] to-primary bg-clip-text text-transparent font-['Rajdhani'] uppercase">
+      <header className="mb-8 flex flex-col items-center text-center">
+        <h1 className="m-0 font-['Rajdhani'] text-7xl font-extrabold uppercase leading-none tracking-[0.12em] bg-gradient-to-r from-[#FF8A65] to-primary bg-clip-text text-transparent max-sm:text-6xl">
           MARS
         </h1>
-        <p className="text-muted-foreground/80 text-sm mt-3 tracking-wide">
+        <p className="mt-4 text-sm font-semibold tracking-[0.18em] text-muted-foreground/70 max-sm:text-xs">
           Minutes to Action & Review System
         </p>
       </header>
 
       <main className="max-w-[1000px] w-full text-center">
-        <h2 className="text-5xl font-bold mb-5 tracking-tight text-foreground">
-          회의를 실행으로 전환하세요
-        </h2>
-        <p className="text-muted-foreground/80 text-base max-w-[800px] mx-auto mb-12 tracking-tight font-normal">
-          AI 기반 워크플로우 관리로 액션 아이템을 추출하고, 실행을 추적하며, 생산성을 향상시킵니다
-        </p>
+        {/* <p className="mx-auto mb-5 max-w-[720px] text-balance text-[1.35rem] font-semibold leading-8 tracking-tight text-foreground max-sm:text-xl max-sm:leading-7">
+          회의록에서 할 일을 추출해 담당자와 마감일까지 이어주는 AI 회의 실행 관리 서비스
+        </p> */}
+        <div className="mb-11 flex flex-wrap items-center justify-center gap-3">
+          {featureHighlights.map(({ icon: Icon, label }) => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/70 px-4 py-2 text-sm font-medium leading-none text-muted-foreground"
+            >
+              <Icon className="size-4 text-primary" strokeWidth={1.8} />
+              {label}
+            </span>
+          ))}
+        </div>
         <UserIdentityPanel
           mode={identityMode}
           userIdInput={userIdInput}
