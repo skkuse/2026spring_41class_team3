@@ -142,3 +142,18 @@
     line-height: 1.5;
   }
 }
+
+@layer components {
+  .mars-date-input {
+    color-scheme: light;
+  }
+
+  .mars-date-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .mars-date-input::-webkit-calendar-picker-indicator:hover {
+    opacity: 0;
+  }
+}

@@ -1,11 +1,15 @@
 import type * as React from 'react';
 import { ArrowLeft, FolderPlus } from 'lucide-react';
+import ProjectDeadlineField from './ProjectDeadlineField';
 
 interface CreateProjectFormProps {
   projectName: string;
   projectDescription: string;
   projectType: string;
   projectDeadline: string;
+  isProjectDeadlineInvalid: boolean;
+  projectDeadlineValidationMessage: string;
+  isDeadlineWarningVisible: boolean;
   errorMessage: string;
   isLoading: boolean;
   onBack: () => void;
@@ -14,6 +18,7 @@ interface CreateProjectFormProps {
   onProjectDescriptionChange: (description: string) => void;
   onProjectTypeChange: (projectType: string) => void;
   onProjectDeadlineChange: (deadline: string) => void;
+  onCloseValidationModal: () => void;
   onSubmit: (event: React.FormEvent) => void;
 }
 
@@ -22,6 +27,9 @@ const CreateProjectForm = ({
   projectDescription,
   projectType,
   projectDeadline,
+  isProjectDeadlineInvalid,
+  projectDeadlineValidationMessage,
+  isDeadlineWarningVisible,
   errorMessage,
   isLoading,
   onBack,
@@ -30,6 +38,7 @@ const CreateProjectForm = ({
   onProjectDescriptionChange,
   onProjectTypeChange,
   onProjectDeadlineChange,
+  onCloseValidationModal,
   onSubmit,
 }: CreateProjectFormProps) => {
   const isSubmitDisabled =
@@ -37,7 +46,8 @@ const CreateProjectForm = ({
     !projectName.trim() ||
     !projectDescription.trim() ||
     !projectType.trim() ||
-    !projectDeadline;
+    !projectDeadline ||
+    isProjectDeadlineInvalid;
 
   return (
     <div className="w-full max-w-[620px] bg-card border border-border rounded-xl p-8 shadow-2xl animate-fade-in text-left">
@@ -60,7 +70,7 @@ const CreateProjectForm = ({
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-5">
+      <form onSubmit={onSubmit} className="space-y-5" noValidate>
         <div className="space-y-1.5">
           <label className="text-sm font-semibold text-foreground">프로젝트 이름</label>
           <input
@@ -98,16 +108,13 @@ const CreateProjectForm = ({
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">마감일</label>
-            <input
-              type="datetime-local"
-              value={projectDeadline}
-              onChange={(event) => onProjectDeadlineChange(event.target.value)}
-              className="w-full bg-[#161920] border border-border text-foreground px-4 py-3 rounded-lg text-base focus:outline-none focus:border-primary transition-all"
-              required
-            />
-          </div>
+          <ProjectDeadlineField
+            deadline={projectDeadline}
+            validationMessage={projectDeadlineValidationMessage}
+            isWarningVisible={isDeadlineWarningVisible}
+            onDeadlineChange={onProjectDeadlineChange}
+            onCloseWarning={onCloseValidationModal}
+          />
         </div>
 
         <div className="min-h-5">

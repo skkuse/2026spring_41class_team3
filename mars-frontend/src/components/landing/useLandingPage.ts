@@ -1,12 +1,13 @@
 import type * as React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ApiError, checkUserAvailability, createUser, loginUser } from '../../lib/api';
+import { ApiError, checkUserAvailability, createProject, createUser, loginUser } from '../../lib/api';
 import type { UserResponse } from '../../lib/api';
-import { setStoredUserUuid } from '../../lib/authCookie';
+import { getStoredUserIdentity, setStoredUserIdentity } from '../../lib/authCookie';
 import type { LandingViewMode, ProjectNavigationState, UserIdentity, UserIdentityMode } from './types';
 
 const USER_ID_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{3,}$/;
+const INVALID_PROJECT_DEADLINE_MESSAGE = '마감일은 오늘 또는 이후 날짜로 설정해 주세요.';
 
 const validateUserId = (value: string) => {
   if (!value) {
@@ -39,11 +40,21 @@ const getNetworkErrorMessage = (error: unknown) => {
 const toUserIdentity = (user: UserResponse): UserIdentity => ({
   id: user.username,
   name: user.name,
-  uuid: user.id,
+  uuid: getUserUuid(user),
 });
 
 const storeUserIdentity = (user: UserIdentity) => {
-  setStoredUserUuid(user.uuid);
+  setStoredUserIdentity(user);
+};
+
+const getUserUuid = (user: UserResponse) => {
+  const flexibleUser = user as UserResponse & {
+    user_id?: string;
+    user_uuid?: string;
+    uuid?: string;
+  };
+
+  return flexibleUser.id ?? flexibleUser.user_id ?? flexibleUser.user_uuid ?? flexibleUser.uuid ?? '';
 };
 
 const getAvailabilityErrorMessage = (error: unknown) => {
@@ -100,6 +111,47 @@ const getLoginUserErrorMessage = (error: unknown) => {
   return '접속에 실패했습니다. 잠시 후 다시 시도해 주세요.';
 };
 
+const getCreateProjectErrorMessage = (error: unknown) => {
+  if (error instanceof ApiError && error.status === 422) {
+    return '프로젝트 정보를 다시 확인해 주세요.';
+  }
+
+  const networkMessage = getNetworkErrorMessage(error);
+
+  if (networkMessage) {
+    return networkMessage;
+  }
+
+  return '프로젝트 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+};
+
+const logCreateProjectError = (error: unknown, payload: unknown) => {
+  console.error('[Landing][CreateProject:Failed]', {
+    payload,
+    error,
+  });
+
+  if (error instanceof ApiError) {
+    console.error('[Landing][CreateProject:APIError]', {
+      status: error.status,
+      body: error.body,
+    });
+
+    if (isValidationDetailBody(error.body)) {
+      console.table(error.body.detail);
+    }
+  }
+};
+
+const isValidationDetailBody = (body: unknown): body is { detail: unknown[] } => {
+  return (
+    typeof body === 'object' &&
+    body !== null &&
+    'detail' in body &&
+    Array.isArray((body as { detail?: unknown }).detail)
+  );
+};
+
 const getProjectValidationMessage = ({
   projectName,
   projectDescription,
@@ -123,17 +175,51 @@ const getProjectValidationMessage = ({
     return '프로젝트 유형을 입력해 주세요.';
   }
 
-  const deadlineDate = new Date(projectDeadline);
+  return getProjectDeadlineValidationMessage(projectDeadline);
+};
 
-  if (!projectDeadline || Number.isNaN(deadlineDate.getTime())) {
+const parseLocalDate = (dateValue: string) => {
+  const [year, month, date] = dateValue.split('-').map(Number);
+
+  return new Date(year, month - 1, date);
+};
+
+const isDateBeforeToday = (date: Date) => {
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  return date.getTime() < startOfToday.getTime();
+};
+
+const getProjectDeadlineValidationMessage = (projectDeadline: string) => {
+  if (!projectDeadline) {
     return '마감일을 올바르게 입력해 주세요.';
+  }
+
+  const deadlineDate = parseLocalDate(projectDeadline);
+
+  if (Number.isNaN(deadlineDate.getTime())) {
+    return '마감일을 올바르게 입력해 주세요.';
+  }
+
+  if (isDateBeforeToday(deadlineDate)) {
+    return INVALID_PROJECT_DEADLINE_MESSAGE;
   }
 
   return '';
 };
 
+const toDeadlineISOString = (dateValue: string) => {
+  const deadline = parseLocalDate(dateValue);
+
+  deadline.setHours(23, 59, 59, 999);
+
+  return deadline.toISOString();
+};
+
 export const useLandingPage = () => {
   const navigate = useNavigate();
+  const storedUser = getStoredUserIdentity();
 
   const [viewMode, setViewMode] = useState<LandingViewMode>('landing');
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
@@ -142,10 +228,10 @@ export const useLandingPage = () => {
   const [isCopied, setIsCopied] = useState(false);
 
   const [identityMode, setIdentityMode] = useState<UserIdentityMode>('access');
-  const [currentUser, setCurrentUser] = useState<UserIdentity | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserIdentity | null>(storedUser);
   const [availableUserId, setAvailableUserId] = useState('');
-  const [userIdInput, setUserIdInput] = useState('');
-  const [userNameInput, setUserNameInput] = useState('');
+  const [userIdInput, setUserIdInput] = useState(storedUser?.id ?? '');
+  const [userNameInput, setUserNameInput] = useState(storedUser?.name ?? '');
   const [projectCode, setProjectCode] = useState('');
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
@@ -157,12 +243,14 @@ export const useLandingPage = () => {
     '',
   );
   const [errorMessage, setErrorMessage] = useState('');
+  const [isDeadlineWarningVisible, setIsDeadlineWarningVisible] = useState(false);
 
   const [createdProjectId, setCreatedProjectId] = useState('');
   const [pendingNavigateData, setPendingNavigateData] = useState<ProjectNavigationState | null>(null);
 
   const resetCreateProjectForm = () => {
     setErrorMessage('');
+    setIsDeadlineWarningVisible(false);
     setProjectName('');
     setProjectDescription('');
     setProjectType('');
@@ -183,6 +271,7 @@ export const useLandingPage = () => {
   const goToLanding = () => {
     setViewMode('landing');
     setErrorMessage('');
+    setIsDeadlineWarningVisible(false);
   };
 
   const handleCreateProjectClick = () => {
@@ -330,6 +419,15 @@ export const useLandingPage = () => {
     setProjectCode(event.target.value.replace(/[^0-9]/g, ''));
   };
 
+  const handleProjectDeadlineChange = (deadline: string) => {
+    setProjectDeadline(deadline);
+
+    const deadlineValidationMessage = deadline ? getProjectDeadlineValidationMessage(deadline) : '';
+
+    setIsDeadlineWarningVisible(Boolean(deadlineValidationMessage));
+    setErrorMessage(deadlineValidationMessage);
+  };
+
   const handleOpenJoinModal = () => {
     if (!currentUser) {
       setDuplicateCheckMessage('먼저 사용자 아이디로 접속하거나 새 아이디를 만들어 주세요.');
@@ -353,6 +451,14 @@ export const useLandingPage = () => {
       return;
     }
 
+    if (!currentUser.uuid) {
+      console.error('[Landing][CreateProject:MissingUserUuid]', {
+        currentUser,
+      });
+      setErrorMessage('사용자 정보를 확인할 수 없습니다. 다시 접속한 뒤 시도해 주세요.');
+      return;
+    }
+
     if (projectCode.length !== 10) {
       setErrorMessage('코드는 정확히 10자리 숫자여야 합니다.');
       return;
@@ -369,7 +475,7 @@ export const useLandingPage = () => {
     });
   };
 
-  const handleCreateProjectSubmit = (event: React.FormEvent) => {
+  const handleCreateProjectSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!currentUser) {
@@ -386,26 +492,44 @@ export const useLandingPage = () => {
 
     if (validationMessage) {
       setErrorMessage(validationMessage);
+      setIsDeadlineWarningVisible(Boolean(projectDeadlineValidationMessage && validationMessage === projectDeadlineValidationMessage));
       return;
     }
 
     setIsLoading(true);
     setErrorMessage('');
+    setIsDeadlineWarningVisible(false);
 
-    const localProjectId = crypto.randomUUID();
+    const createProjectPayload = {
+      name: projectName.trim(),
+      owner_user_id: currentUser.uuid,
+      description: projectDescription.trim(),
+      project_type: projectType.trim(),
+      deadline: toDeadlineISOString(projectDeadline),
+    };
 
-    setCreatedProjectId(localProjectId);
-    setIsCopied(false);
-    setPendingNavigateData({
-      userId: currentUser.id,
-      userUuid: currentUser.uuid,
-      projectId: localProjectId,
-      projectCode: localProjectId,
-      title: projectName.trim(),
-      role: 'admin',
-    });
-    setIsSuccessModalOpen(true);
-    setIsLoading(false);
+    console.log('[Landing][CreateProject:Request]', createProjectPayload);
+
+    try {
+      const createdProject = await createProject(createProjectPayload);
+
+      setCreatedProjectId(createdProject.id);
+      setIsCopied(false);
+      setPendingNavigateData({
+        userId: currentUser.id,
+        userUuid: currentUser.uuid,
+        projectId: createdProject.id,
+        projectCode: createdProject.id,
+        title: createdProject.name,
+        role: 'admin',
+      });
+      setIsSuccessModalOpen(true);
+    } catch (error) {
+      logCreateProjectError(error, createProjectPayload);
+      setErrorMessage(getCreateProjectErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCopyCode = async () => {
@@ -426,6 +550,14 @@ export const useLandingPage = () => {
     }
   };
 
+  const handleCloseValidationModal = () => {
+    setIsDeadlineWarningVisible(false);
+  };
+
+  const projectDeadlineValidationMessage = projectDeadline
+    ? getProjectDeadlineValidationMessage(projectDeadline)
+    : '';
+
   return {
     state: {
       viewMode,
@@ -443,6 +575,9 @@ export const useLandingPage = () => {
       projectDescription,
       projectType,
       projectDeadline,
+      isProjectDeadlineInvalid: Boolean(projectDeadlineValidationMessage),
+      projectDeadlineValidationMessage,
+      isDeadlineWarningVisible,
       userIdWarning,
       duplicateCheckMessage,
       errorMessage,
@@ -465,10 +600,11 @@ export const useLandingPage = () => {
       setProjectName,
       setProjectDescription,
       setProjectType,
-      setProjectDeadline,
+      handleProjectDeadlineChange,
       handleCreateProjectSubmit,
       handleCopyCode,
       handleCloseSuccessAndNavigate,
+      handleCloseValidationModal,
     },
   };
 };

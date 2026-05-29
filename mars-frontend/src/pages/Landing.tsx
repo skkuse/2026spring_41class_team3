@@ -49,6 +49,9 @@ const Landing = () => {
           projectDescription={state.projectDescription}
           projectType={state.projectType}
           projectDeadline={state.projectDeadline}
+          isProjectDeadlineInvalid={state.isProjectDeadlineInvalid}
+          projectDeadlineValidationMessage={state.projectDeadlineValidationMessage}
+          isDeadlineWarningVisible={state.isDeadlineWarningVisible}
           errorMessage={state.errorMessage}
           isLoading={state.isLoading}
           onBack={actions.goToLanding}
@@ -56,7 +59,8 @@ const Landing = () => {
           onProjectNameChange={actions.setProjectName}
           onProjectDescriptionChange={actions.setProjectDescription}
           onProjectTypeChange={actions.setProjectType}
-          onProjectDeadlineChange={actions.setProjectDeadline}
+          onProjectDeadlineChange={actions.handleProjectDeadlineChange}
+          onCloseValidationModal={actions.handleCloseValidationModal}
           onSubmit={actions.handleCreateProjectSubmit}
         />
       )}
