@@ -17,6 +17,7 @@ class ProjectResponse(BaseModel):
     description: Optional[str] = None
     project_type: Optional[str] = None
     deadline: Optional[datetime.datetime] = None
+    project_code: str
     created_at: datetime.datetime
 
     class Config:
@@ -24,6 +25,10 @@ class ProjectResponse(BaseModel):
 
 class AddMemberRequest(BaseModel):
     user_id: uuid.UUID    
+
+class JoinProjectRequest(BaseModel):
+    project_code: str
+    user_id: uuid.UUID
 
 class MemberResponse(BaseModel):
     project_id: uuid.UUID

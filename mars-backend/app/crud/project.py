@@ -62,3 +62,19 @@ def delete_project(db: Session, project_id: uuid.UUID):
     db.delete(project)
     db.commit()
     return {"message": "프로젝트가 삭제되었습니다."}
+
+def join_project_by_invite_code(db: Session, invite_code: str, user_id: uuid.UUID):
+    project = db.query(Project).filter(Project.project_code == invite_code).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="초대 코드에 해당하는 프로젝트가 없습니다.")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="유저를 찾을 수 없습니다.")
+    user.project_id = project.id
+    db.commit()
+    db.refresh(user)
+    return {
+        "project_id": project.id,
+        "user_id": user.id,
+        "joined_at": user.joined_at,
+    }

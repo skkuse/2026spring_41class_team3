@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.schemas import ProjectCreate, ProjectResponse, AddMemberRequest, MemberResponse, ProjectMemberResponse
-from app.crud import create_project, get_project, add_member, get_members
+from app.schemas import ProjectCreate, ProjectResponse, AddMemberRequest, JoinProjectRequest, MemberResponse, ProjectMemberResponse
+from app.crud import create_project, get_project, add_member, get_members, join_project_by_invite_code
 from app.db.database import SessionLocal
 import uuid
 from typing import List 
@@ -40,3 +40,7 @@ def get_project_member(project_id: uuid.UUID, db: Session = Depends(get_db)):
 def delete_project_api(project_id: uuid.UUID, db: Session = Depends(get_db)):
     from app.crud import delete_project
     return delete_project(db, project_id)
+
+@router.post("/projects/join", response_model=MemberResponse, status_code=200, summary="초대 코드로 프로젝트 참여")
+def join_project(body: JoinProjectRequest, db: Session = Depends(get_db)):
+    return join_project_by_invite_code(db, body.project_code, body.user_id)

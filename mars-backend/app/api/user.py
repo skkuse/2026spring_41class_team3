@@ -57,4 +57,3 @@ def delete_user_api(user_id: uuid.UUID, db: Session = Depends(get_db)):
     return delete_user(db, user_id)
 
 
-

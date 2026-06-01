@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.schemas import MeetingCreate, MeetingResponse, MeetingSummaryCreate, MeetingProductivityCreate, AgendaCreate, MeetingDetailResponse, AgendaResponse
+from app.schemas.meeting import MeetingAnalyzeResponse
 from app.crud.meeting import create_meeting, create_summary, create_productivity, create_agenda, get_meeting, get_proposed_agendas
+from app.services.ai_service import analyze_meeting
 from app.db.database import SessionLocal
 import uuid
 from typing import List
@@ -56,3 +58,17 @@ def delete_meeting_api(meeting_id: uuid.UUID, db: Session = Depends(get_db)):
 def delete_agenda_api(agenda_id: uuid.UUID, db: Session = Depends(get_db)):
     from app.crud.meeting import delete_agenda
     return delete_agenda(db, agenda_id)
+
+
+@router.post(
+    "/meetings/{meeting_id}/analyze",
+    response_model=MeetingAnalyzeResponse,
+    summary="회의 AI 분석 실행",
+)
+def analyze_meeting_api(meeting_id: uuid.UUID, db: Session = Depends(get_db)):
+    """
+    DB에 저장된 회의 데이터를 기반으로 AI 분석을 수행하고 결과를 저장합니다.
+    - GPT로 요약 / 액션아이템 / 피드백 / 차기안건 생성
+    - HF Space BERTScore로 품질 검증 (recall >= 0.7)
+    """
+    return analyze_meeting(db, meeting_id)

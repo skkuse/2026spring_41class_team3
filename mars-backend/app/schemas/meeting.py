@@ -61,3 +61,16 @@ class AgendaResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ActionItemAI(BaseModel):
+    task: str
+    priority: int
+
+
+class MeetingAnalyzeResponse(BaseModel):
+    meeting_id: uuid.UUID
+    summary: str
+    action_items: List[ActionItemAI]
+    qualitative_feedback: str
+    next_agenda: List[str]
