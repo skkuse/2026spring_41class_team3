@@ -1,8 +1,12 @@
 export { API_BASE_URL, API_REQUEST_TIMEOUT_MS } from './config';
 export { apiRequest } from './httpClient';
+export { getProjectActionItems } from './actionItems';
+export { getMeeting } from './meetings';
 export { createProject, joinProject } from './projects';
 export { checkUserAvailability, createUser, loginUser } from './users';
 export { ApiError } from './types';
+export type { ActionItemResponse, GetProjectActionItemsParams } from './actionItems';
 export type { CreateProjectRequest, JoinProjectRequest, JoinProjectResponse, ProjectResponse } from './projects';
+export type { MeetingResponse } from './meetings';
 export type { CreateUserRequest, UserAvailabilityResponse, UserResponse } from './users';
 export type { ApiErrorBody, ApiRequestOptions } from './types';

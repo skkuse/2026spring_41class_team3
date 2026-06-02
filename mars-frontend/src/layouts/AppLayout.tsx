@@ -1,8 +1,6 @@
 import { LogOut } from 'lucide-react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-
-const loginUserId = '98cb2c1a';
-const currentProjectName = '2026 Spring Team 3';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { clearStoredProjectContext, getStoredProjectContext } from '../lib/projectContext';
 
 const navItems = [
   {
@@ -33,6 +31,21 @@ const navItems = [
 
 function AppLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const storedProjectContext = getStoredProjectContext();
+  const routeState = location.state as {
+    userId?: string;
+    title?: string;
+    projectCode?: string;
+  } | null;
+
+  const loginUserId = routeState?.userId ?? storedProjectContext?.userId ?? 'Guest';
+  const currentProjectName = routeState?.title ?? storedProjectContext?.projectTitle ?? '선택된 프로젝트 없음';
+
+  const handleLeaveProject = () => {
+    clearStoredProjectContext();
+    navigate('/');
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -70,7 +83,7 @@ function AppLayout() {
           <button
             type="button"
             className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
-            onClick={() => navigate('/')}
+            onClick={handleLeaveProject}
           >
             <LogOut className="h-4 w-4" />
             프로젝트 나가기

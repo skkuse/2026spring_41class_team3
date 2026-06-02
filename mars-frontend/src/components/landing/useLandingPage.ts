@@ -503,6 +503,8 @@ export const useLandingPage = () => {
           userId: currentUser.id,
           userUuid: currentUser.uuid,
           projectId: joinedProject.project_id,
+          // TODO: /projects/join 응답에 project_code/project_name이 추가되면
+          // 입력값 projectCode 대신 응답의 project_code를 쓰고 title도 project_name으로 넘긴다.
           projectCode,
         },
       });
