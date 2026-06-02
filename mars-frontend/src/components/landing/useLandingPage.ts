@@ -245,7 +245,7 @@ export const useLandingPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isDeadlineWarningVisible, setIsDeadlineWarningVisible] = useState(false);
 
-  const [createdProjectId, setCreatedProjectId] = useState('');
+  const [createdProjectCode, setCreatedProjectCode] = useState('');
   const [pendingNavigateData, setPendingNavigateData] = useState<ProjectNavigationState | null>(null);
 
   const resetCreateProjectForm = () => {
@@ -513,13 +513,13 @@ export const useLandingPage = () => {
     try {
       const createdProject = await createProject(createProjectPayload);
 
-      setCreatedProjectId(createdProject.id);
+      setCreatedProjectCode(createdProject.project_code);
       setIsCopied(false);
       setPendingNavigateData({
         userId: currentUser.id,
         userUuid: currentUser.uuid,
         projectId: createdProject.id,
-        projectCode: createdProject.id,
+        projectCode: createdProject.project_code,
         title: createdProject.name,
         role: 'admin',
       });
@@ -534,7 +534,7 @@ export const useLandingPage = () => {
 
   const handleCopyCode = async () => {
     try {
-      await navigator.clipboard.writeText(createdProjectId);
+      await navigator.clipboard.writeText(createdProjectCode);
       setIsCopied(true);
       window.setTimeout(() => setIsCopied(false), 2000);
     } catch {
@@ -581,7 +581,7 @@ export const useLandingPage = () => {
       userIdWarning,
       duplicateCheckMessage,
       errorMessage,
-      createdProjectId,
+      createdProjectCode,
     },
     actions: {
       goToLanding,

@@ -1,16 +1,16 @@
 import { ArrowRight, Check, Copy, FolderPlus } from 'lucide-react';
 
 interface ProjectCreatedModalProps {
-  projectId: string;
+  projectCode: string;
   isCopied: boolean;
-  onCopyProjectId: () => void;
+  onCopyProjectCode: () => void;
   onEnterDashboard: () => void;
 }
 
 const ProjectCreatedModal = ({
-  projectId,
+  projectCode,
   isCopied,
-  onCopyProjectId,
+  onCopyProjectCode,
   onEnterDashboard,
 }: ProjectCreatedModalProps) => {
   return (
@@ -22,16 +22,16 @@ const ProjectCreatedModal = ({
 
         <h3 className="text-2xl font-bold tracking-tight text-foreground mb-1">프로젝트 생성 완료!</h3>
         <p className="text-sm text-muted-foreground mb-6">
-          생성된 프로젝트 ID를 확인해 주세요.
+          생성된 프로젝트 코드를 확인해 주세요.
         </p>
 
         <div className="bg-[#161920] border border-border rounded-lg p-4 flex items-center justify-between mb-6 group">
           <span className="text-sm font-mono font-bold text-primary pl-2 break-all text-left">
-            {projectId}
+            {projectCode}
           </span>
           <button
             type="button"
-            onClick={onCopyProjectId}
+            onClick={onCopyProjectCode}
             className="bg-secondary hover:bg-neutral-800 text-foreground border border-border p-2.5 rounded-md cursor-pointer transition-all flex items-center gap-1.5 text-xs font-semibold"
           >
             {isCopied ? (
@@ -42,7 +42,7 @@ const ProjectCreatedModal = ({
             ) : (
               <>
                 <Copy className="w-4 h-4 text-muted-foreground" />
-                <span>ID 복사</span>
+                <span>코드 복사</span>
               </>
             )}
           </button>

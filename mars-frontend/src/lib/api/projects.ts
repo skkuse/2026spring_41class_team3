@@ -10,6 +10,7 @@ export interface CreateProjectRequest {
 
 export interface ProjectResponse {
   id: string;
+  project_code: string;
   name: string;
   owner_id: string;
   description: string | null;
