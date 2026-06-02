@@ -1,7 +1,7 @@
 import type * as React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ApiError, checkUserAvailability, createProject, createUser, loginUser } from '../../lib/api';
+import { ApiError, checkUserAvailability, createProject, createUser, joinProject, loginUser } from '../../lib/api';
 import type { UserResponse } from '../../lib/api';
 import { getStoredUserIdentity, setStoredUserIdentity } from '../../lib/authCookie';
 import type { LandingViewMode, ProjectNavigationState, UserIdentity, UserIdentityMode } from './types';
@@ -123,6 +123,30 @@ const getCreateProjectErrorMessage = (error: unknown) => {
   }
 
   return '프로젝트 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+};
+
+const getJoinProjectErrorMessage = (error: unknown) => {
+  if (error instanceof ApiError) {
+    if (error.status === 404) {
+      return '해당 프로젝트 코드를 찾을 수 없습니다.';
+    }
+
+    if (error.status === 409) {
+      return '이미 참여 중인 프로젝트입니다.';
+    }
+
+    if (error.status === 422) {
+      return '프로젝트 코드와 사용자 정보를 다시 확인해 주세요.';
+    }
+  }
+
+  const networkMessage = getNetworkErrorMessage(error);
+
+  if (networkMessage) {
+    return networkMessage;
+  }
+
+  return '프로젝트 참여에 실패했습니다. 잠시 후 다시 시도해 주세요.';
 };
 
 const logCreateProjectError = (error: unknown, payload: unknown) => {
@@ -443,7 +467,7 @@ export const useLandingPage = () => {
     setIsJoinModalOpen(false);
   };
 
-  const handleJoinSubmit = (event: React.FormEvent) => {
+  const handleJoinSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!currentUser) {
@@ -465,14 +489,33 @@ export const useLandingPage = () => {
     }
 
     setErrorMessage('');
-    setIsJoinModalOpen(false);
-    navigate('/dashboard', {
-      state: {
-        userId: currentUser.id,
-        userUuid: currentUser.uuid,
+    setIsLoading(true);
+
+    try {
+      const joinedProject = await joinProject({
+        project_code: projectCode,
+        user_id: currentUser.uuid,
+      });
+
+      setIsJoinModalOpen(false);
+      navigate('/dashboard', {
+        state: {
+          userId: currentUser.id,
+          userUuid: currentUser.uuid,
+          projectId: joinedProject.project_id,
+          projectCode,
+        },
+      });
+    } catch (error) {
+      console.error('[Landing][JoinProject:Failed]', {
         projectCode,
-      },
-    });
+        userUuid: currentUser.uuid,
+        error,
+      });
+      setErrorMessage(getJoinProjectErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCreateProjectSubmit = async (event: React.FormEvent) => {
