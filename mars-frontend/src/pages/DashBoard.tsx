@@ -136,7 +136,7 @@ const DashBoard: React.FC = () => {
         const progressRate = totalActionItems === 0 ? 0 : Math.round((completedActionItems / totalActionItems) * 100);
 
         const recentMeetings = hasRemoteData
-            ? buildRemoteMeetingSummaries(dashboardActionItems, remoteMeetings)
+            ? buildRemoteMeetingSummaries(remoteActionItems, remoteMeetings)
             : pastMeetings.map((meeting) => {
                 const relatedActionItems = dashboardActionItems.filter((item) => item.meeting_id === meeting.id);
                 const actionItemCount = relatedActionItems.length || meeting.actionItems;

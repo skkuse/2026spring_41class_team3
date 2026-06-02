@@ -5,9 +5,9 @@ export interface ActionItemResponse {
   meeting_id?: string | null;
   assignee_id?: string | null;
   description?: string | null;
-  priority?: string | null;
-  urgency?: string | null;
-  importance?: string | null;
+  priority?: number | null;
+  urgency?: number | null;
+  importance?: number | null;
   status?: string | null;
   deadline?: string | null;
   created_at?: string | null;

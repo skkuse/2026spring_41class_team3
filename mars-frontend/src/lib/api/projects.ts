@@ -32,6 +32,11 @@ export interface JoinProjectResponse {
   joined_at: string;
 }
 
+export interface ProjectMemberResponse {
+  id: string;
+  name: string;
+}
+
 export const createProject = (body: CreateProjectRequest) => {
   return apiRequest<ProjectResponse>('/projects/', {
     method: 'POST',
@@ -44,4 +49,8 @@ export const joinProject = (body: JoinProjectRequest) => {
     method: 'POST',
     body,
   });
+};
+
+export const getProjectMembers = (projectId: string) => {
+  return apiRequest<ProjectMemberResponse[]>(`/projects/${encodeURIComponent(projectId)}/members`);
 };
