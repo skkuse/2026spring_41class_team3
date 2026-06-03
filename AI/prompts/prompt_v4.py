@@ -1,4 +1,4 @@
-# prompts/prompt_v4.py
+# prompts/prompt_v1.py
 
 SYSTEM_PROMPT = """
 ### System Role

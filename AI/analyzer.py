@@ -19,7 +19,7 @@ def get_openai_response(user_input: str) -> str:
     )
 
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": retrieved_prompt},
             {"role": "user", "content": "Please analyze the meeting based on the instructions."}
