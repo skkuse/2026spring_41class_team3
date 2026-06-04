@@ -7,14 +7,17 @@ import RecentMeetingsPanel from '../components/dashboard/RecentMeetingsPanel';
 import { buildDashboardSummary } from '../components/dashboard/dashboardSummary';
 import { getMeeting, getProject, getProjectActionItems } from '../lib/api';
 import type { ActionItemResponse, MeetingResponse } from '../lib/api';
+import { getStoredUserIdentity } from '../lib/authCookie';
 import { getStoredProjectContext, setStoredProjectContext } from '../lib/projectContext';
 
 const DashBoard: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const storedUser = getStoredUserIdentity();
     const storedProjectContext = getStoredProjectContext();
     const routeState = location.state as {
         userId?: string;
+        userName?: string;
         userUuid?: string;
         projectId?: string;
         projectCode?: string;
@@ -24,6 +27,7 @@ const DashBoard: React.FC = () => {
     const projectCode = routeState?.projectCode ?? storedProjectContext?.projectCode ?? '----------';
     const fallbackProjectTitle = routeState?.title ?? storedProjectContext?.projectTitle ?? '선택된 프로젝트 없음';
     const userId = routeState?.userId ?? storedProjectContext?.userId ?? 'Guest';
+    const userDisplayName = routeState?.userName ?? storedUser?.name ?? userId;
     const userUuid = routeState?.userUuid ?? storedProjectContext?.userUuid ?? '';
     const projectId = routeState?.projectId ?? storedProjectContext?.projectId ?? '';
     const [resolvedProjectTitle, setResolvedProjectTitle] = useState<string | null>(null);
@@ -144,7 +148,7 @@ const DashBoard: React.FC = () => {
                     setRemoteActionItems([]);
                     setRemoteMeetings({});
                     setHasLoadedRemoteData(false);
-                    setDashboardErrorMessage('대시보드 데이터를 불러오지 못했습니다. 임시 데이터로 표시합니다.');
+                    setDashboardErrorMessage('대시보드 데이터를 불러오지 못했습니다.');
                 }
             } finally {
                 if (isMounted) {
@@ -207,7 +211,7 @@ const DashBoard: React.FC = () => {
                         </div>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                        <span className="text-primary font-medium">{userId}</span>님, 프로젝트 개요 및 데이터 분석을 확인하세요.
+                        <span className="text-primary font-medium">{userDisplayName}</span>님, 프로젝트 개요 및 데이터 분석을 확인하세요.
                     </p>
                     {dashboardErrorMessage && (
                         <p className="mt-2 text-xs text-primary">{dashboardErrorMessage}</p>
@@ -228,27 +232,30 @@ const DashBoard: React.FC = () => {
 
                 <DashboardStatCard
                     icon={Clock}
-                    value={dashboardSummary.totalActionItems}
+                    value={isDashboardLoading ? '로딩 중' : dashboardSummary.totalActionItems}
                     label="총 액션 아이템"
                     badge={isDashboardLoading ? '불러오는 중' : '프로젝트 기준'}
+                    isLoading={isDashboardLoading}
                     variant="primary"
                     onClick={() => navigate('/actions')}
                 />
 
                 <DashboardStatCard
                     icon={CheckCircle}
-                    value={dashboardSummary.completedActionItems}
+                    value={isDashboardLoading ? '로딩 중' : dashboardSummary.completedActionItems}
                     label="완료된 태스크"
-                    badge={`달성률 ${dashboardSummary.progressRate}%`}
+                    badge={isDashboardLoading ? '불러오는 중' : `달성률 ${dashboardSummary.progressRate}%`}
+                    isLoading={isDashboardLoading}
                     variant="success"
                     onClick={() => navigate('/actions')}
                 />
 
                 <DashboardStatCard
                     icon={Target}
-                    value={`${dashboardSummary.progressRate}%`}
+                    value={isDashboardLoading ? '로딩 중' : `${dashboardSummary.progressRate}%`}
                     label="전체 진행률"
-                    badge="현재 데이터 기준"
+                    badge={isDashboardLoading ? '불러오는 중' : '현재 데이터 기준'}
+                    isLoading={isDashboardLoading}
                     variant="primary"
                     onClick={() => navigate('/suggestions')}
                 />
@@ -258,6 +265,7 @@ const DashBoard: React.FC = () => {
             {/* ================= RECENT MEETINGS AREA ================= */}
             <RecentMeetingsPanel
                 meetings={dashboardSummary.recentMeetings}
+                isLoading={isDashboardLoading}
                 onViewAll={() => navigate('/meetings/past')}
             />
         </main>

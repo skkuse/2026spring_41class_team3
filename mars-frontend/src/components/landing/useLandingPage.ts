@@ -280,6 +280,7 @@ export const useLandingPage = () => {
       navigate('/dashboard', {
         state: {
           userId: currentUser.id,
+          userName: currentUser.name,
           userUuid: currentUser.uuid,
           projectId: joinedProject.project_id,
           projectCode: projectDetail.project_code,
@@ -340,6 +341,7 @@ export const useLandingPage = () => {
       setIsCopied(false);
       setPendingNavigateData({
         userId: currentUser.id,
+        userName: currentUser.name,
         userUuid: currentUser.uuid,
         projectId: createdProject.id,
         projectCode: createdProject.project_code,

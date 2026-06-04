@@ -255,13 +255,11 @@ function ActionItems() {
           </p>
         )}
 
-        {isLoading && (
+        {isLoading ? (
           <div className="rounded-lg border border-border bg-card p-8 text-sm text-muted-foreground">
             액션 아이템을 불러오는 중입니다.
           </div>
-        )}
-
-        {!isLoading && actionItems.length === 0 ? (
+        ) : actionItems.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-secondary/40 p-10 text-center text-sm text-muted-foreground">
             아직 등록된 액션 아이템이 없습니다.
           </div>

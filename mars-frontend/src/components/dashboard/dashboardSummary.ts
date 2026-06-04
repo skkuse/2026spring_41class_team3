@@ -1,13 +1,6 @@
-import { actionItems } from '../actionItems/actionItemsData';
-import { pastMeetings } from '../pastMeetings/pastMeetingsData';
 import type { ActionItemResponse, MeetingResponse } from '../../lib/api';
 import { formatKoreanDate } from '../../lib/date';
 import type { DashboardMeeting, DashboardSummary } from './types';
-
-interface DashboardActionItemLike {
-  meeting_id?: string | null;
-  status?: string | null;
-}
 
 export const buildDashboardSummary = ({
   hasLoadedRemoteData,
@@ -18,13 +11,11 @@ export const buildDashboardSummary = ({
   remoteActionItems: ActionItemResponse[];
   remoteMeetings: Record<string, MeetingResponse>;
 }): DashboardSummary => {
-  const dashboardActionItems = hasLoadedRemoteData ? remoteActionItems : actionItems;
+  const dashboardActionItems = hasLoadedRemoteData ? remoteActionItems : [];
   const totalActionItems = dashboardActionItems.length;
   const completedActionItems = dashboardActionItems.filter((item) => isCompletedActionItem(item.status)).length;
   const progressRate = totalActionItems === 0 ? 0 : Math.round((completedActionItems / totalActionItems) * 100);
-  const recentMeetings = hasLoadedRemoteData
-    ? buildRemoteMeetingSummaries(remoteActionItems, remoteMeetings)
-    : buildFallbackMeetingSummaries(dashboardActionItems);
+  const recentMeetings = hasLoadedRemoteData ? buildRemoteMeetingSummaries(remoteActionItems, remoteMeetings) : [];
 
   return {
     totalActionItems,
@@ -38,24 +29,6 @@ export const isCompletedActionItem = (status?: string | null) => {
   const normalizedStatus = status?.toLowerCase();
 
   return normalizedStatus === 'done' || normalizedStatus === 'completed' || normalizedStatus === 'complete';
-};
-
-const buildFallbackMeetingSummaries = (dashboardActionItems: DashboardActionItemLike[]): DashboardMeeting[] => {
-  return pastMeetings.map((meeting) => {
-    const relatedActionItems = dashboardActionItems.filter((item) => item.meeting_id === meeting.id);
-    const actionItemCount = relatedActionItems.length || meeting.actionItems;
-    const completedCount = relatedActionItems.length
-      ? relatedActionItems.filter((item) => isCompletedActionItem(item.status)).length
-      : meeting.completed;
-    const completionRate = actionItemCount === 0 ? 0 : Math.round((completedCount / actionItemCount) * 100);
-
-    return {
-      ...meeting,
-      items: actionItemCount,
-      done: completedCount,
-      pct: `${completionRate}%`,
-    };
-  });
 };
 
 const buildRemoteMeetingSummaries = (

@@ -2,10 +2,11 @@ import type { DashboardMeeting } from './types';
 
 interface RecentMeetingsPanelProps {
   meetings: DashboardMeeting[];
+  isLoading?: boolean;
   onViewAll: () => void;
 }
 
-function RecentMeetingsPanel({ meetings, onViewAll }: RecentMeetingsPanelProps) {
+function RecentMeetingsPanel({ meetings, isLoading = false, onViewAll }: RecentMeetingsPanelProps) {
   return (
     <section className="bg-card border border-border rounded-xl p-6">
       <div className="flex justify-between items-center mb-6">
@@ -21,7 +22,11 @@ function RecentMeetingsPanel({ meetings, onViewAll }: RecentMeetingsPanelProps) 
       </div>
 
       <div className="space-y-3">
-        {meetings.length > 0 ? meetings.map((meeting) => (
+        {isLoading ? (
+          <div className="rounded-xl border border-border/60 bg-[#1A1D23]/40 p-8 text-center text-sm text-muted-foreground">
+            최근 회의를 불러오는 중입니다.
+          </div>
+        ) : meetings.length > 0 ? meetings.map((meeting) => (
           <RecentMeetingRow key={meeting.id} meeting={meeting} onClick={onViewAll} />
         )) : (
           <div className="rounded-xl border border-border/60 bg-[#1A1D23]/40 p-8 text-center text-sm text-muted-foreground">
