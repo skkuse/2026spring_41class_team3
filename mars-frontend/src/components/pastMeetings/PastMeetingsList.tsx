@@ -7,6 +7,7 @@ interface PastMeetingsListProps {
   selectedMeetingId: string | null;
   detail: PastMeetingDetail | null;
   onSelectMeeting: (meetingId: string) => void;
+  onDeleteMeeting: (meetingId: string) => void;
 }
 
 function PastMeetingsList({
@@ -14,6 +15,7 @@ function PastMeetingsList({
   selectedMeetingId,
   detail,
   onSelectMeeting,
+  onDeleteMeeting,
 }: PastMeetingsListProps) {
   return (
     <section className="rounded-lg border border-border bg-card p-6">
@@ -27,6 +29,7 @@ function PastMeetingsList({
                 meeting={meeting}
                 isSelected={isSelected}
                 onSelect={onSelectMeeting}
+                onDelete={onDeleteMeeting}
               />
 
               {isSelected && detail ? (

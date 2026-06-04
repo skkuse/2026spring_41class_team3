@@ -15,9 +15,12 @@ interface ActionItemCardProps {
   users: User[];
   onAssigneeChange: (itemId: string, assigneeId: string) => void;
   onDelete: (itemId: string) => void;
+  isDeleting?: boolean;
+  canChangeAssignee?: boolean;
   onDragStart?: (itemId: string) => void;
   onDragEnd?: () => void;
   isDragging?: boolean;
+  canDrag?: boolean;
 }
 
 function ActionItemCard({
@@ -26,15 +29,21 @@ function ActionItemCard({
   users,
   onAssigneeChange,
   onDelete,
+  isDeleting = false,
+  canChangeAssignee = false,
   onDragStart,
   onDragEnd,
   isDragging = false,
+  canDrag = true,
 }: ActionItemCardProps) {
   const [isAssigneeMenuOpen, setIsAssigneeMenuOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const priority = priorityConfig[item.priority];
   const assignee = users.find((user) => user.id === item.assignee_id);
   const assigneeName = assignee?.name ?? '담당자 미지정';
+  const assigneeControlTitle = canChangeAssignee
+    ? '담당자 변경'
+    : '담당자 변경 API가 아직 없어 변경할 수 없습니다.';
   const deadlineLabel = item.deadline.split('T')[0];
   const deadlineTime = new Date(item.deadline).getTime();
   const tomorrowStart = new Date();
@@ -54,7 +63,7 @@ function ActionItemCard({
 
   return (
     <article
-      draggable={!isAssigneeMenuOpen}
+      draggable={canDrag && !isAssigneeMenuOpen}
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
       className={[
@@ -69,7 +78,12 @@ function ActionItemCard({
       />
 
       <div className="flex gap-4">
-        <GripVertical className="mt-1 h-5 w-5 shrink-0 cursor-grab text-muted-foreground/80 active:cursor-grabbing" />
+        <GripVertical
+          className={[
+            'mt-1 h-5 w-5 shrink-0 text-muted-foreground/80',
+            canDrag ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-40',
+          ].join(' ')}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
@@ -91,8 +105,9 @@ function ActionItemCard({
               />
               <button
                 type="button"
-                aria-label="액션 아이템 삭제"
-                className="rounded-md p-1 text-muted-foreground opacity-0 transition hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                aria-label={isDeleting ? '액션 아이템 삭제 중' : '액션 아이템 삭제'}
+                disabled={isDeleting}
+                className="rounded-md border border-border bg-secondary p-1 text-muted-foreground transition hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={(event) => {
                   event.stopPropagation();
                   setIsDeleteConfirmOpen((open) => !open);
@@ -108,16 +123,18 @@ function ActionItemCard({
                     <button
                       type="button"
                       className="rounded-md px-2 py-1 text-xs text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                      disabled={isDeleting}
                       onClick={() => setIsDeleteConfirmOpen(false)}
                     >
                       취소
                     </button>
                     <button
                       type="button"
-                      className="rounded-md bg-destructive px-2 py-1 text-xs text-destructive-foreground transition hover:opacity-90"
+                      className="rounded-md bg-destructive px-2 py-1 text-xs text-destructive-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={isDeleting}
                       onClick={() => onDelete(item.id)}
                     >
-                      삭제
+                      {isDeleting ? '삭제 중' : '삭제'}
                     </button>
                   </div>
                 </div>
@@ -135,26 +152,35 @@ function ActionItemCard({
 
               <button
                 type="button"
-                aria-haspopup="listbox"
-                aria-expanded={isAssigneeMenuOpen}
+                aria-haspopup={canChangeAssignee ? 'listbox' : undefined}
+                aria-expanded={canChangeAssignee ? isAssigneeMenuOpen : undefined}
+                disabled={!canChangeAssignee}
+                title={assigneeControlTitle}
                 className={[
                   'flex min-w-24 items-center justify-between gap-2 rounded-full border px-3 py-1 text-sm transition',
                   isAssigneeMenuOpen
                     ? 'border-primary bg-primary/10 text-foreground'
                     : 'border-border bg-secondary text-foreground hover:border-primary/50 hover:bg-muted',
+                  !canChangeAssignee ? 'cursor-default opacity-80 hover:border-border hover:bg-secondary' : '',
                 ].join(' ')}
-                onClick={() => setIsAssigneeMenuOpen((isOpen) => !isOpen)}
+                onClick={() => {
+                  if (canChangeAssignee) {
+                    setIsAssigneeMenuOpen((isOpen) => !isOpen);
+                  }
+                }}
               >
                 <span>{assigneeName}</span>
-                <ChevronDown
-                  className={[
-                    'h-4 w-4 text-muted-foreground transition',
-                    isAssigneeMenuOpen ? 'rotate-180' : '',
-                  ].join(' ')}
-                />
+                {canChangeAssignee ? (
+                  <ChevronDown
+                    className={[
+                      'h-4 w-4 text-muted-foreground transition',
+                      isAssigneeMenuOpen ? 'rotate-180' : '',
+                    ].join(' ')}
+                  />
+                ) : null}
               </button>
 
-              {isAssigneeMenuOpen ? (
+              {canChangeAssignee && isAssigneeMenuOpen ? (
                 <div
                   role="listbox"
                   className="absolute left-20 top-9 z-20 w-36 overflow-hidden rounded-lg border border-border bg-card shadow-xl"

@@ -10,6 +10,7 @@ interface ActionItemsMatrixViewProps {
   onAssigneeChange: (itemId: string, assigneeId: string) => void;
   onPriorityChange: (itemId: string, priority: ActionItemPriority) => void;
   onDelete: (itemId: string) => void;
+  deletingItemIds?: string[];
 }
 
 function ActionItemsMatrixView({
@@ -18,6 +19,7 @@ function ActionItemsMatrixView({
   onAssigneeChange,
   onPriorityChange,
   onDelete,
+  deletingItemIds = [],
 }: ActionItemsMatrixViewProps) {
   const [openDescription, setOpenDescription] =
     useState<ActionItemPriority | null>(null);
@@ -103,6 +105,8 @@ function ActionItemsMatrixView({
                   users={users}
                   onAssigneeChange={onAssigneeChange}
                   onDelete={onDelete}
+                  isDeleting={deletingItemIds.includes(item.id)}
+                  canChangeAssignee
                   onDragStart={setDraggingItemId}
                   onDragEnd={() => {
                     setDraggingItemId(null);

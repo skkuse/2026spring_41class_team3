@@ -16,4 +16,6 @@ export interface PastMeetingDetail {
   qualitative_feedback: string;
   productivity_score: number;
   created_at: string;
+  actionItems: number;
+  completed: number;
 }
