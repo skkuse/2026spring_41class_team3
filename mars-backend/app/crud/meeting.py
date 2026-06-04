@@ -159,6 +159,7 @@ def save_analysis_result(
     if next_agendas and project_id:
         db_agenda = Agenda(
             project_id=project_id,
+            meeting_id=meeting_id,
             proposed_agendas=next_agendas,
             is_adopted=False,
         )
