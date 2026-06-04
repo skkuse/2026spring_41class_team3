@@ -77,9 +77,9 @@ function Suggestions() {
     navigate('/meetings', {
       state: {
         meetingDraft: {
-          title: item.title,
-          purpose: `차기 안건 논의: ${item.title}`,
-          rawText: item.description || item.title,
+          title: '',
+          purpose: item.description || item.title,
+          rawText: '',
         },
       },
     });
