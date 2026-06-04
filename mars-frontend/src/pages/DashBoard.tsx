@@ -2,20 +2,12 @@ import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Clock, CheckCircle, Target, Copy, Check } from 'lucide-react';
-import { actionItems } from '../components/actionItems/actionItemsData';
-import { pastMeetings } from '../components/pastMeetings/pastMeetingsData';
+import DashboardStatCard from '../components/dashboard/DashboardStatCard';
+import RecentMeetingsPanel from '../components/dashboard/RecentMeetingsPanel';
+import { buildDashboardSummary } from '../components/dashboard/dashboardSummary';
 import { getMeeting, getProjectActionItems } from '../lib/api';
 import type { ActionItemResponse, MeetingResponse } from '../lib/api';
 import { getStoredProjectContext, setStoredProjectContext } from '../lib/projectContext';
-
-interface DashboardMeeting {
-    id: string;
-    title: string;
-    date: string;
-    items: number;
-    done: number;
-    pct: string;
-}
 
 const DashBoard: React.FC = () => {
     const navigate = useNavigate();
@@ -126,41 +118,13 @@ const DashBoard: React.FC = () => {
         return () => {
             isMounted = false;
         };
-    }, [projectId]);
+    }, [projectId, userUuid]);
 
-    const dashboardSummary = useMemo(() => {
-        const hasRemoteData = hasLoadedRemoteData;
-        const dashboardActionItems = hasRemoteData ? remoteActionItems : actionItems;
-        const totalActionItems = dashboardActionItems.length;
-        const completedActionItems = dashboardActionItems.filter((item) => isCompletedActionItem(item.status)).length;
-        const progressRate = totalActionItems === 0 ? 0 : Math.round((completedActionItems / totalActionItems) * 100);
-
-        const recentMeetings = hasRemoteData
-            ? buildRemoteMeetingSummaries(remoteActionItems, remoteMeetings)
-            : pastMeetings.map((meeting) => {
-                const relatedActionItems = dashboardActionItems.filter((item) => item.meeting_id === meeting.id);
-                const actionItemCount = relatedActionItems.length || meeting.actionItems;
-                const completedCount = relatedActionItems.length
-                    ? relatedActionItems.filter((item) => isCompletedActionItem(item.status)).length
-                    : meeting.completed;
-                const completionRate = actionItemCount === 0 ? 0 : Math.round((completedCount / actionItemCount) * 100);
-
-                return {
-                    ...meeting,
-                    items: actionItemCount,
-                    done: completedCount,
-                    pct: `${completionRate}%`,
-                };
-            })
-        ;
-
-        return {
-            totalActionItems,
-            completedActionItems,
-            progressRate,
-            recentMeetings: recentMeetings.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4),
-        };
-    }, [hasLoadedRemoteData, remoteActionItems, remoteMeetings]);
+    const dashboardSummary = useMemo(() => buildDashboardSummary({
+        hasLoadedRemoteData,
+        remoteActionItems,
+        remoteMeetings,
+    }), [hasLoadedRemoteData, remoteActionItems, remoteMeetings]);
 
     // 참여 코드 클립보드 복사 함수
     const handleCopyCode = async () => {
@@ -221,169 +185,43 @@ const DashBoard: React.FC = () => {
 
             {/* ================= STATS CARDS AREA ================= */}
             <section className="grid grid-cols-3 gap-5 mb-8 max-md:grid-cols-1">
-                
-                {/* 총 액션 아이템 카드 */}
-                <div 
-                    className="bg-card border border-border rounded-xl p-6 relative flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary/50 transition-all group"
-                    onClick={() => navigate('/actions')}
-                >
-                    <div className="flex justify-between items-start">
-                        <div className="p-2.5 rounded-lg bg-[#2E2522] border border-[#44322B] group-hover:bg-primary/20 transition-all">
-                            <Clock className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                        </div>
-                        <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
-                            {isDashboardLoading ? '불러오는 중' : '프로젝트 기준'}
-                        </span>
-                    </div>
-                    <div className="mt-4">
-                        <h3 className="text-3xl font-bold tracking-tight text-foreground group-hover:text-primary transition-all">{dashboardSummary.totalActionItems}</h3>
-                        <p className="text-xs text-muted-foreground mt-1">총 액션 아이템</p>
-                    </div>
-                </div>
 
-                {/* 완료된 태스크 카드 */}
-                <div 
-                    className="bg-card border border-border rounded-xl p-6 relative flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-emerald-500/50 transition-all group"
+                <DashboardStatCard
+                    icon={Clock}
+                    value={dashboardSummary.totalActionItems}
+                    label="총 액션 아이템"
+                    badge={isDashboardLoading ? '불러오는 중' : '프로젝트 기준'}
+                    variant="primary"
                     onClick={() => navigate('/actions')}
-                >
-                    <div className="flex justify-between items-start">
-                        <div className="p-2.5 rounded-lg bg-[#222E28] border border-[#2B4436] group-hover:bg-emerald-500/20 transition-all">
-                            <CheckCircle className="w-5 h-5 text-emerald-500" strokeWidth={1.5} />
-                        </div>
-                        <span className="text-[11px] font-semibold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">달성률 {dashboardSummary.progressRate}%</span>
-                    </div>
-                    <div className="mt-4">
-                        <h3 className="text-3xl font-bold tracking-tight text-foreground group-hover:text-emerald-500 transition-all">{dashboardSummary.completedActionItems}</h3>
-                        <p className="text-xs text-muted-foreground mt-1">완료된 태스크</p>
-                    </div>
-                </div>
+                />
 
-                {/* 진행률 카드 */}
-                <div 
-                    className="bg-card border border-border rounded-xl p-6 relative flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-primary/50 transition-all group"
+                <DashboardStatCard
+                    icon={CheckCircle}
+                    value={dashboardSummary.completedActionItems}
+                    label="완료된 태스크"
+                    badge={`달성률 ${dashboardSummary.progressRate}%`}
+                    variant="success"
+                    onClick={() => navigate('/actions')}
+                />
+
+                <DashboardStatCard
+                    icon={Target}
+                    value={`${dashboardSummary.progressRate}%`}
+                    label="전체 진행률"
+                    badge="현재 데이터 기준"
+                    variant="primary"
                     onClick={() => navigate('/suggestions')}
-                >
-                    <div className="flex justify-between items-start">
-                        <div className="p-2.5 rounded-lg bg-[#2E2522] border border-[#44322B] group-hover:bg-primary/20 transition-all">
-                            <Target className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                        </div>
-                        <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">현재 데이터 기준</span>
-                    </div>
-                    <div className="mt-4">
-                        <h3 className="text-3xl font-bold tracking-tight text-foreground group-hover:text-primary transition-all">{dashboardSummary.progressRate}%</h3>
-                        <p className="text-xs text-muted-foreground mt-1">전체 진행률</p>
-                    </div>
-                </div>
+                />
 
             </section>
 
             {/* ================= RECENT MEETINGS AREA ================= */}
-            <section className="bg-card border border-border rounded-xl p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold font-['Rajdhani'] text-foreground">최근 회의 목록</h3>
-                    
-                    <button 
-                        className="text-xs text-primary font-semibold hover:underline cursor-pointer"
-                        onClick={() => navigate('/meetings/past')}
-                    >
-                        전체 보기
-                    </button>
-                </div>
-                
-                {/* 회의 목록 리스트 */}
-                <div className="space-y-3">
-                    {dashboardSummary.recentMeetings.length > 0 ? dashboardSummary.recentMeetings.map((meeting) => (
-                        <div 
-                            key={meeting.id} 
-                            className="flex items-center justify-between p-4 rounded-xl bg-[#1A1D23]/40 border border-border/60 hover:border-primary/40 cursor-pointer transition-all group"
-                            onClick={() => navigate('/meetings/past')}
-                        >
-                            {/* 제목 및 날짜 */}
-                            <div className="w-1/3">
-                                <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-all">{meeting.title}</h4>
-                                <p className="text-xs text-muted-foreground mt-1">{meeting.date}</p>
-                            </div>
-                            
-                            {/* 수치 메트릭 */}
-                            <div className="flex items-center gap-6 text-center text-xs font-mono w-1/3 justify-center">
-                                <div>
-                                    <div className="text-foreground font-bold">{meeting.items}</div>
-                                    <div className="text-[10px] text-muted-foreground uppercase mt-0.5 font-sans">할 일</div>
-                                </div>
-                                <div>
-                                    <div className="text-primary font-bold">{meeting.done}</div>
-                                    <div className="text-[10px] text-muted-foreground uppercase mt-0.5 font-sans">완료</div>
-                                </div>
-                            </div>
-
-                            {/* 게이지바 영역 */}
-                            <div className="w-1/4 flex items-center justify-end">
-                                <div className="w-32 bg-[#23272F] h-1.5 rounded-full overflow-hidden">
-                                    <div 
-                                        className="bg-primary h-full rounded-full" 
-                                        style={{ width: meeting.pct }}
-                                    ></div>
-                                </div>
-                            </div>
-
-                        </div>
-                    )) : (
-                        <div className="rounded-xl border border-border/60 bg-[#1A1D23]/40 p-8 text-center text-sm text-muted-foreground">
-                            아직 표시할 회의와 액션 아이템이 없습니다.
-                        </div>
-                    )}
-                </div>
-            </section>
+            <RecentMeetingsPanel
+                meetings={dashboardSummary.recentMeetings}
+                onViewAll={() => navigate('/meetings/past')}
+            />
         </main>
     );
-};
-
-const isCompletedActionItem = (status?: string | null) => {
-    const normalizedStatus = status?.toLowerCase();
-
-    return normalizedStatus === 'done' || normalizedStatus === 'completed' || normalizedStatus === 'complete';
-};
-
-const buildRemoteMeetingSummaries = (
-    dashboardActionItems: ActionItemResponse[],
-    meetingMap: Record<string, MeetingResponse>,
-): DashboardMeeting[] => {
-    const groupedActionItems = dashboardActionItems.reduce<Record<string, ActionItemResponse[]>>((acc, item) => {
-        const meetingId = item.meeting_id ?? 'unassigned';
-        acc[meetingId] = [...(acc[meetingId] ?? []), item];
-        return acc;
-    }, {});
-
-    return Object.entries(groupedActionItems).map(([meetingId, meetingActionItems]) => {
-        const meeting = meetingMap[meetingId];
-        const actionItemCount = meetingActionItems.length;
-        const completedCount = meetingActionItems.filter((item) => isCompletedActionItem(item.status)).length;
-        const completionRate = actionItemCount === 0 ? 0 : Math.round((completedCount / actionItemCount) * 100);
-        const createdAt = meeting?.date ?? meeting?.created_at ?? meetingActionItems[0]?.created_at ?? '';
-
-        return {
-            id: meetingId,
-            title: meeting?.title ?? meeting?.name ?? meetingActionItems[0]?.description ?? '회의 정보 없음',
-            date: formatDashboardDate(createdAt),
-            items: actionItemCount,
-            done: completedCount,
-            pct: `${completionRate}%`,
-        };
-    });
-};
-
-const formatDashboardDate = (value?: string | null) => {
-    if (!value) {
-        return '날짜 없음';
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return value.slice(0, 10);
-    }
-
-    return date.toISOString().slice(0, 10);
 };
 
 export default DashBoard;
