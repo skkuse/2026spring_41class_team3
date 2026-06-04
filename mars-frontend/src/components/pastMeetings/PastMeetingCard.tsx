@@ -1,27 +1,19 @@
 import { useState } from 'react';
-import { ArrowRight, Lightbulb, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import type { PastMeeting } from './types';
 
 interface PastMeetingCardProps {
   meeting: PastMeeting;
   isSelected: boolean;
-  hasGeneratedAgenda: boolean;
-  isGeneratingAgenda: boolean;
   onSelect: (meetingId: string) => void;
   onDelete: (meetingId: string) => void;
-  onCreateAgenda: (meetingId: string) => void;
-  onViewSuggestions: () => void;
 }
 
 function PastMeetingCard({
   meeting,
   isSelected,
-  hasGeneratedAgenda,
-  isGeneratingAgenda,
   onSelect,
   onDelete,
-  onCreateAgenda,
-  onViewSuggestions,
 }: PastMeetingCardProps) {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
@@ -55,26 +47,6 @@ function PastMeetingCard({
             <span>추출된 액션 아이템 {meeting.actionItems}</span>
             <span>완료 {meeting.completed}</span>
           </button>
-          {hasGeneratedAgenda ? (
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-md border border-primary bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-              onClick={onViewSuggestions}
-            >
-              제안 보러가기
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isGeneratingAgenda}
-              onClick={() => onCreateAgenda(meeting.id)}
-            >
-              <Lightbulb className="h-4 w-4 text-primary" />
-              {isGeneratingAgenda ? '안건 생성 중...' : '다음 회의 안건 생성하기'}
-            </button>
-          )}
           <button
             type="button"
             aria-label={`${meeting.title} 삭제`}

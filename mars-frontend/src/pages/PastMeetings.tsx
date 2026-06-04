@@ -1,25 +1,23 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import PastMeetingsList from '../components/pastMeetings/PastMeetingsList';
 import type { PastMeeting, PastMeetingDetail } from '../components/pastMeetings/types';
-import { createAgenda, deleteMeeting, getMeeting, getProjectActionItems, getProjectMembers } from '../lib/api';
+import { deleteMeeting, getMeeting, getProjectActionItems, getProjectMembers } from '../lib/api';
 import type { ActionItemResponse, MeetingResponse } from '../lib/api';
 import { getStoredProjectContext } from '../lib/projectContext';
 
-const GENERATED_AGENDA_STORAGE_PREFIX = 'mars_generated_agenda_meeting_ids';
-
 function PastMeetings() {
-  const navigate = useNavigate();
+  const location = useLocation();
+  const routeState = location.state as { selectedMeetingId?: unknown } | null;
+  const initialSelectedMeetingId = typeof routeState?.selectedMeetingId === 'string'
+    ? routeState.selectedMeetingId
+    : null;
   const storedProjectContext = getStoredProjectContext();
   const projectId = storedProjectContext?.projectId ?? '';
   const currentUserId = storedProjectContext?.userUuid ?? '';
-  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(initialSelectedMeetingId);
   const [meetings, setMeetings] = useState<PastMeeting[]>([]);
   const [meetingDetails, setMeetingDetails] = useState<Record<string, PastMeetingDetail>>({});
-  const [generatedAgendaMeetingIds, setGeneratedAgendaMeetingIds] = useState<string[]>(() =>
-    projectId ? readGeneratedAgendaMeetingIds(projectId) : [],
-  );
-  const [generatingAgendaMeetingIds, setGeneratingAgendaMeetingIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageTone, setMessageTone] = useState<'success' | 'error'>('success');
@@ -128,11 +126,6 @@ function PastMeetings() {
     const previousDetails = meetingDetails;
 
     setMeetings((items) => items.filter((meeting) => meeting.id !== meetingId));
-    setGeneratedAgendaMeetingIds((ids) => {
-      const nextIds = ids.filter((id) => id !== meetingId);
-      writeGeneratedAgendaMeetingIds(projectId, nextIds);
-      return nextIds;
-    });
     setMeetingDetails((details) => {
       const nextDetails = { ...details };
       delete nextDetails[meetingId];
@@ -154,40 +147,6 @@ function PastMeetings() {
       setMeetingDetails(previousDetails);
       setMessageTone('error');
       setMessage('회의 삭제에 실패했습니다.');
-    }
-  };
-
-  const handleCreateAgenda = async (meetingId: string) => {
-    const detail = meetingDetails[meetingId];
-
-    if (!projectId || !detail || generatingAgendaMeetingIds.includes(meetingId)) {
-      return;
-    }
-
-    setGeneratingAgendaMeetingIds((ids) => [...ids, meetingId]);
-    setMessage('');
-
-    try {
-      await createAgenda(projectId, {
-        proposed_agendas: buildProposedAgendas(detail),
-      });
-      setGeneratedAgendaMeetingIds((ids) => {
-        const nextIds = ids.includes(meetingId) ? ids : [...ids, meetingId];
-        writeGeneratedAgendaMeetingIds(projectId, nextIds);
-        return nextIds;
-      });
-      setMessageTone('success');
-      setMessage('다음 회의 안건을 생성했습니다.');
-    } catch (error) {
-      console.error('[PastMeetings][AgendaCreateFailed]', {
-        projectId,
-        meetingId,
-        error,
-      });
-      setMessageTone('error');
-      setMessage('다음 회의 안건 생성에 실패했습니다.');
-    } finally {
-      setGeneratingAgendaMeetingIds((ids) => ids.filter((id) => id !== meetingId));
     }
   };
 
@@ -220,12 +179,8 @@ function PastMeetings() {
             meetings={meetings}
             selectedMeetingId={selectedMeetingId}
             detail={selectedDetail}
-            generatedAgendaMeetingIds={generatedAgendaMeetingIds}
-            generatingAgendaMeetingIds={generatingAgendaMeetingIds}
             onSelectMeeting={handleSelectMeeting}
             onDeleteMeeting={handleDeleteMeeting}
-            onCreateAgenda={handleCreateAgenda}
-            onViewSuggestions={() => navigate('/suggestions')}
           />
         )}
       </div>
@@ -313,46 +268,6 @@ const isCompletedActionItem = (status?: string | null) => {
   const normalizedStatus = status?.toLowerCase();
 
   return normalizedStatus === 'done' || normalizedStatus === 'completed' || normalizedStatus === 'complete';
-};
-
-const buildProposedAgendas = (detail: PastMeetingDetail) => {
-  if (detail.next_agenda.length > 0) {
-    return detail.next_agenda;
-  }
-
-  if (detail.summary && detail.summary !== '회의 요약 정보가 없습니다.') {
-    return [`${detail.title} 후속 논의: ${detail.summary}`];
-  }
-
-  return [`${detail.title} 후속 논의`];
-};
-
-const getGeneratedAgendaStorageKey = (projectId: string) => {
-  return `${GENERATED_AGENDA_STORAGE_PREFIX}:${projectId}`;
-};
-
-const readGeneratedAgendaMeetingIds = (projectId: string) => {
-  try {
-    const rawValue = window.sessionStorage.getItem(getGeneratedAgendaStorageKey(projectId));
-    const parsedValue = rawValue ? JSON.parse(rawValue) : [];
-
-    return Array.isArray(parsedValue)
-      ? parsedValue.filter((value): value is string => typeof value === 'string')
-      : [];
-  } catch {
-    return [];
-  }
-};
-
-const writeGeneratedAgendaMeetingIds = (projectId: string, meetingIds: string[]) => {
-  if (!projectId) {
-    return;
-  }
-
-  window.sessionStorage.setItem(
-    getGeneratedAgendaStorageKey(projectId),
-    JSON.stringify(Array.from(new Set(meetingIds))),
-  );
 };
 
 const isNonEmptyString = (value?: string | null): value is string => {
