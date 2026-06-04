@@ -1,9 +1,9 @@
 import uuid
-import datetime
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, Table, Float, Boolean, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from database import Base
+from app.db.timezone import kst_now
 
 # 0. N:M association table for meeting participants
 meeting_participants = Table(
@@ -22,7 +22,7 @@ class Project(Base):
     description = Column(Text, nullable=True)
     project_type = Column(String, nullable=True)
     deadline = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=kst_now)
 
     # Relationships (1:N)
     users = relationship("User", back_populates="project", cascade="all, delete")
@@ -37,8 +37,8 @@ class User(Base):
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
     name = Column(String, nullable=False)
     role = Column(String, nullable=True)
-    joined_at = Column(DateTime, default=datetime.datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    joined_at = Column(DateTime, default=kst_now)
+    created_at = Column(DateTime, default=kst_now)
 
     # Relationships
     project = relationship("Project", back_populates="users")
@@ -53,7 +53,7 @@ class Meeting(Base):
     title = Column(String, nullable=False)
     purpose = Column(String, nullable=True)
     raw_text = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=kst_now)
 
     # Relationships
     project = relationship("Project", back_populates="meetings")
@@ -73,7 +73,7 @@ class ActionItem(Base):
     assignee_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     description = Column(Text, nullable=False)
     status = Column(String, default="TODO")
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=kst_now)
 
     priority = Column(Integer, nullable=True)     
     importance = Column(Integer, nullable=True)  
@@ -93,7 +93,7 @@ class MeetingSummary(Base):
     meeting_id = Column(UUID(as_uuid=True), ForeignKey("meetings.id"), unique=True) 
     summary = Column(Text, nullable=True)
     qualitative_feedback = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=kst_now)
 
     meeting = relationship("Meeting", back_populates="summary")
 
@@ -105,7 +105,7 @@ class MeetingProductivity(Base):
     meeting_id = Column(UUID(as_uuid=True), ForeignKey("meetings.id"), unique=True)
     score = Column(Float, nullable=True)
     metrics = Column(JSON, nullable=True)  # Stores detailed metrics as JSON
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=kst_now)
 
     meeting = relationship("Meeting", back_populates="productivity")
 
@@ -117,6 +117,6 @@ class Agenda(Base):
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
     proposed_agendas = Column(JSON, nullable=True)  # Stores a list of agenda items as JSON
     is_adopted = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=kst_now)
 
     project = relationship("Project", back_populates="agendas")

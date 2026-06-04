@@ -1,9 +1,9 @@
 import uuid
-import datetime
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Table
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.database import Base
+from app.db.timezone import kst_now
 
 meeting_participants = Table(
     "meeting_participants",
@@ -20,7 +20,7 @@ class Meeting(Base):
     title = Column(String, nullable=False)
     purpose = Column(String, nullable=True)
     raw_text = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=kst_now)
 
     # Relationships
     project = relationship("Project", back_populates="meetings")

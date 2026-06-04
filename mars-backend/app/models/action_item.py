@@ -1,9 +1,9 @@
 import uuid
-import datetime
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.database import Base
+from app.db.timezone import kst_now
 
 
 class ActionItem(Base):
@@ -14,7 +14,7 @@ class ActionItem(Base):
     assignee_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     description = Column(Text, nullable=False)
     status = Column(String, default="TODO")
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=kst_now)
 
     priority = Column(Integer, nullable=True)
     importance = Column(Integer, nullable=True)

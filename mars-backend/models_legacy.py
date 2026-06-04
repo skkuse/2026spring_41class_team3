@@ -1,11 +1,11 @@
 # [구버전] 기존 데이터베이스 모델 파일 (이전 구조)
 
 import uuid
-import datetime
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, Table, Float, Boolean, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from database import Base
+from app.db.timezone import kst_now
 
 # 0. N:M association table for meeting participants
 meeting_participants = Table(
@@ -23,7 +23,7 @@ class Project(Base):
     description = Column(Text, nullable=True)
     project_type = Column(String, nullable=True)
     deadline = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=kst_now)
     users = relationship("User", back_populates="project", cascade="all, delete")
     meetings = relationship("Meeting", back_populates="project", cascade="all, delete")
     agendas = relationship("Agenda", back_populates="project", cascade="all, delete")
@@ -35,8 +35,8 @@ class User(Base):
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
     name = Column(String, nullable=False)
     role = Column(String, nullable=True)
-    joined_at = Column(DateTime, default=datetime.datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    joined_at = Column(DateTime, default=kst_now)
+    created_at = Column(DateTime, default=kst_now)
     project = relationship("Project", back_populates="users")
     action_items = relationship("ActionItem", back_populates="assignee")
 
@@ -48,6 +48,6 @@ class Meeting(Base):
     title = Column(String, nullable=False)
     purpose = Column(String, nullable=True)
     raw_text = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=kst_now)
     project = relationship("Project", back_populates="meetings")
     participants = relationship("User", secondary=meeting_participants)
