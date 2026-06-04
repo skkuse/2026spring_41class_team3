@@ -1,17 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ActionItemsHeader from '../components/actionItems/ActionItemsHeader';
 import ActionItemsListView from '../components/actionItems/ActionItemsListView';
 import ActionItemsMatrixView from '../components/actionItems/ActionItemsMatrixView';
-import { actionItems as initialActionItems } from '../components/actionItems/actionItemsData';
 import { groupActionItems } from '../components/actionItems/groupActionItems';
-import { usersData } from '../components/actionItems/usersData';
+import { deleteActionItem, getProjectActionItems, getProjectMembers, updateActionItemStatus } from '../lib/api';
+import type { ActionItemResponse } from '../lib/api';
+import { getStoredProjectContext } from '../lib/projectContext';
 import type {
   ActionItem,
   ActionItemLevel,
   ActionItemPriority,
   ActionItemStatus,
   ActionItemsViewMode,
-  NewActionItemInput,
+  User,
 } from '../components/actionItems/types';
 
 const priorityLevels: Record<
@@ -24,20 +25,87 @@ const priorityLevels: Record<
   DELETE: { urgency: 'low', importance: 'low' },
 };
 
-const currentUserId = usersData[0].id;
-
 function ActionItems() {
   const [viewMode, setViewMode] = useState<ActionItemsViewMode>('리스트');
-  const [actionItems, setActionItems] =
-    useState<ActionItem[]>(initialActionItems);
+  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [showOnlyMine, setShowOnlyMine] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageTone, setMessageTone] = useState<'success' | 'error'>('success');
+  const storedProjectContext = getStoredProjectContext();
+  const projectId = storedProjectContext?.projectId ?? '';
+  const currentUserId = storedProjectContext?.userUuid ?? '';
+  const projectContextErrorMessage = !projectId
+    ? '프로젝트 정보를 확인할 수 없습니다. 프로젝트에 다시 접속해 주세요.'
+    : !currentUserId
+      ? '사용자 정보를 확인할 수 없습니다. 다시 접속한 뒤 시도해 주세요.'
+      : '';
+
+  useEffect(() => {
+    if (!projectId || !currentUserId) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadActionItems = async () => {
+      setIsLoading(true);
+      setMessage('');
+
+      const [projectMembersResult, projectActionItemsResult] = await Promise.allSettled([
+        getProjectMembers(projectId),
+        loadProjectActionItems(projectId, currentUserId),
+      ]);
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (projectMembersResult.status === 'fulfilled') {
+        setUsers(projectMembersResult.value);
+      } else {
+        console.error('[ActionItems][MembersLoadFailed]', {
+          projectId,
+          error: projectMembersResult.reason,
+        });
+        setUsers([]);
+      }
+
+      if (projectActionItemsResult.status === 'fulfilled') {
+        setActionItems(projectActionItemsResult.value.items.map(toActionItem));
+        setMessageTone('success');
+        setMessage(projectActionItemsResult.value.isFallback
+          ? '정렬 조회가 실패해 기본 조회 결과로 표시합니다.'
+          : projectMembersResult.status === 'rejected'
+            ? '담당자 목록을 불러오지 못했지만 액션 아이템은 표시합니다.'
+          : '');
+      } else {
+        console.error('[ActionItems][ItemsLoadFailed]', {
+          projectId,
+          error: projectActionItemsResult.reason,
+        });
+        setActionItems([]);
+        setMessageTone('error');
+        setMessage('액션 아이템을 불러오지 못했습니다.');
+      }
+
+      setIsLoading(false);
+    };
+
+    void loadActionItems();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUserId, projectId]);
 
   const visibleActionItems = useMemo(
     () =>
       showOnlyMine
         ? actionItems.filter((item) => item.assignee_id === currentUserId)
         : actionItems,
-    [actionItems, showOnlyMine],
+    [actionItems, currentUserId, showOnlyMine],
   );
 
   const statusGroups = useMemo(
@@ -50,68 +118,52 @@ function ActionItems() {
   );
 
   const handleAssigneeChange = (itemId: string, assigneeId: string) => {
-    console.log('[ActionItems][API] 액션 아이템 담당자 변경 요청', {
+    console.warn('[ActionItems][API] 담당자 변경 엔드포인트 없음', {
       itemId,
       assigneeId,
     });
-    setActionItems((items) =>
-      items.map((item) =>
-        item.id === itemId ? { ...item, assignee_id: assigneeId } : item,
-      ),
-    );
+    setMessageTone('error');
+    setMessage('담당자 변경 API가 아직 없어 저장할 수 없습니다.');
   };
 
-  const handleStatusChange = (itemId: string, status: ActionItemStatus) => {
-    console.log('[ActionItems][API] 액션 아이템 상태 변경 요청', {
-      itemId,
-      status,
-    });
-    setActionItems((items) =>
-      items.map((item) => (item.id === itemId ? { ...item, status } : item)),
-    );
+  const handleStatusChange = async (itemId: string, status: ActionItemStatus) => {
+    const previousItems = actionItems;
+
+    setActionItems((items) => items.map((item) => (item.id === itemId ? { ...item, status } : item)));
+    setMessage('');
+
+    try {
+      const updatedItem = await updateActionItemStatus(itemId, { status });
+      setActionItems((items) => items.map((item) => (item.id === itemId ? toActionItem(updatedItem) : item)));
+    } catch (error) {
+      console.error('[ActionItems][StatusUpdateFailed]', {
+        itemId,
+        status,
+        error,
+      });
+      setActionItems(previousItems);
+      setMessageTone('error');
+      setMessage('액션 아이템 상태 변경에 실패했습니다.');
+    }
   };
 
-  const handlePriorityChange = (
-    itemId: string,
-    priority: ActionItemPriority,
-  ) => {
-    console.log('[ActionItems][API] 액션 아이템 우선순위 변경 요청', {
-      itemId,
-      priority,
-      ...priorityLevels[priority],
-    });
-    setActionItems((items) =>
-      items.map((item) =>
-        item.id === itemId
-          ? { ...item, priority, ...priorityLevels[priority] }
-          : item,
-      ),
-    );
-  };
+  const handleDeleteActionItem = async (itemId: string) => {
+    const previousItems = actionItems;
 
-  const handleCreateActionItem = (input: NewActionItemInput) => {
-    console.log('[ActionItems][API] 액션 아이템 생성 요청', input);
-    const deadline = `${input.deadline}T23:59:59+09:00`;
-
-    setActionItems((items) => [
-      {
-        id: crypto.randomUUID(),
-        meeting_id: 'manual-action-item',
-        assignee_id: input.assignee_id,
-        description: input.description,
-        priority: input.priority,
-        ...priorityLevels[input.priority],
-        status: input.status,
-        deadline,
-        created_at: new Date().toISOString(),
-      },
-      ...items,
-    ]);
-  };
-
-  const handleDeleteActionItem = (itemId: string) => {
-    console.log('[ActionItems][API] 액션 아이템 삭제 요청', { itemId });
     setActionItems((items) => items.filter((item) => item.id !== itemId));
+    setMessage('');
+
+    try {
+      await deleteActionItem(itemId);
+    } catch (error) {
+      console.error('[ActionItems][DeleteFailed]', {
+        itemId,
+        error,
+      });
+      setActionItems(previousItems);
+      setMessageTone('error');
+      setMessage('액션 아이템 삭제에 실패했습니다.');
+    }
   };
 
   return (
@@ -120,17 +172,32 @@ function ActionItems() {
         <ActionItemsHeader
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          users={usersData}
+          users={users}
           currentUserId={currentUserId}
           showOnlyMine={showOnlyMine}
           onShowOnlyMineChange={setShowOnlyMine}
-          onCreateActionItem={handleCreateActionItem}
         />
 
-        {viewMode === '리스트' ? (
+        {(message || projectContextErrorMessage) && (
+          <p className={!projectContextErrorMessage && messageTone === 'success' ? 'text-sm text-emerald-500' : 'text-sm text-primary'}>
+            {projectContextErrorMessage || message}
+          </p>
+        )}
+
+        {isLoading && (
+          <div className="rounded-lg border border-border bg-card p-8 text-sm text-muted-foreground">
+            액션 아이템을 불러오는 중입니다.
+          </div>
+        )}
+
+        {!isLoading && actionItems.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-secondary/40 p-10 text-center text-sm text-muted-foreground">
+            아직 등록된 액션 아이템이 없습니다.
+          </div>
+        ) : viewMode === '리스트' ? (
           <ActionItemsListView
             groupedItems={statusGroups}
-            users={usersData}
+            users={users}
             onAssigneeChange={handleAssigneeChange}
             onStatusChange={handleStatusChange}
             onDelete={handleDeleteActionItem}
@@ -138,9 +205,8 @@ function ActionItems() {
         ) : (
           <ActionItemsMatrixView
             groupedItems={priorityGroups}
-            users={usersData}
+            users={users}
             onAssigneeChange={handleAssigneeChange}
-            onPriorityChange={handlePriorityChange}
             onDelete={handleDeleteActionItem}
           />
         )}
@@ -148,5 +214,100 @@ function ActionItems() {
     </main>
   );
 }
+
+const loadProjectActionItems = async (projectId: string, currentUserId: string) => {
+  const assigneeId = currentUserId || undefined;
+
+  try {
+    return {
+      items: await getProjectActionItems(projectId, {
+        assignee_id: assigneeId,
+        sort: 'created_at_desc',
+      }),
+      isFallback: false,
+    };
+  } catch (error) {
+    console.error('[ActionItems][SortedLoadFailed]', {
+      projectId,
+      assigneeId,
+      error,
+    });
+
+    try {
+      return {
+        items: await getProjectActionItems(projectId, {
+          assignee_id: assigneeId,
+        }),
+        isFallback: true,
+      };
+    } catch (fallbackError) {
+      console.error('[ActionItems][ProjectLoadFailed]', {
+        projectId,
+        assigneeId,
+        error: fallbackError,
+      });
+
+      throw fallbackError;
+    }
+  }
+};
+
+const toActionItem = (item: ActionItemResponse): ActionItem => {
+  const priority = toActionItemPriority(item.priority, item.importance, item.urgency);
+  const levels = priorityLevels[priority];
+
+  return {
+    id: item.id,
+    meeting_id: item.meeting_id ?? '',
+    assignee_id: item.assignee_id ?? '',
+    description: item.description ?? '',
+    priority,
+    urgency: levels.urgency,
+    importance: levels.importance,
+    status: toActionItemStatus(item.status),
+    deadline: item.deadline ?? '',
+    created_at: item.created_at ?? '',
+  };
+};
+
+const toActionItemStatus = (status?: string | null): ActionItemStatus => {
+  const normalizedStatus = status?.toUpperCase();
+
+  if (normalizedStatus === 'TODO' || normalizedStatus === 'IN_PROGRESS' || normalizedStatus === 'DONE') {
+    return normalizedStatus;
+  }
+
+  return 'TODO';
+};
+
+const toActionItemPriority = (
+  priority?: number | null,
+  importance?: number | null,
+  urgency?: number | null,
+): ActionItemPriority => {
+  if (priority !== null && priority !== undefined) {
+    if (priority >= 3) {
+      return 'DO';
+    }
+
+    if (priority <= 1) {
+      return 'DELETE';
+    }
+  }
+
+  if ((importance ?? 0) >= 2 && (urgency ?? 0) >= 2) {
+    return 'DO';
+  }
+
+  if ((importance ?? 0) >= 2) {
+    return 'SCHEDULE';
+  }
+
+  if ((urgency ?? 0) >= 2) {
+    return 'DELEGATE';
+  }
+
+  return 'DELETE';
+};
 
 export default ActionItems;

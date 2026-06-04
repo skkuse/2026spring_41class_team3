@@ -15,9 +15,11 @@ interface ActionItemCardProps {
   users: User[];
   onAssigneeChange: (itemId: string, assigneeId: string) => void;
   onDelete: (itemId: string) => void;
+  canChangeAssignee?: boolean;
   onDragStart?: (itemId: string) => void;
   onDragEnd?: () => void;
   isDragging?: boolean;
+  canDrag?: boolean;
 }
 
 function ActionItemCard({
@@ -26,9 +28,11 @@ function ActionItemCard({
   users,
   onAssigneeChange,
   onDelete,
+  canChangeAssignee = false,
   onDragStart,
   onDragEnd,
   isDragging = false,
+  canDrag = true,
 }: ActionItemCardProps) {
   const [isAssigneeMenuOpen, setIsAssigneeMenuOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -54,7 +58,7 @@ function ActionItemCard({
 
   return (
     <article
-      draggable={!isAssigneeMenuOpen}
+      draggable={canDrag && !isAssigneeMenuOpen}
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
       className={[
@@ -69,7 +73,12 @@ function ActionItemCard({
       />
 
       <div className="flex gap-4">
-        <GripVertical className="mt-1 h-5 w-5 shrink-0 cursor-grab text-muted-foreground/80 active:cursor-grabbing" />
+        <GripVertical
+          className={[
+            'mt-1 h-5 w-5 shrink-0 text-muted-foreground/80',
+            canDrag ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-40',
+          ].join(' ')}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
@@ -137,13 +146,19 @@ function ActionItemCard({
                 type="button"
                 aria-haspopup="listbox"
                 aria-expanded={isAssigneeMenuOpen}
+                disabled={!canChangeAssignee}
                 className={[
                   'flex min-w-24 items-center justify-between gap-2 rounded-full border px-3 py-1 text-sm transition',
                   isAssigneeMenuOpen
                     ? 'border-primary bg-primary/10 text-foreground'
                     : 'border-border bg-secondary text-foreground hover:border-primary/50 hover:bg-muted',
+                  !canChangeAssignee ? 'cursor-default opacity-80 hover:border-border hover:bg-secondary' : '',
                 ].join(' ')}
-                onClick={() => setIsAssigneeMenuOpen((isOpen) => !isOpen)}
+                onClick={() => {
+                  if (canChangeAssignee) {
+                    setIsAssigneeMenuOpen((isOpen) => !isOpen);
+                  }
+                }}
               >
                 <span>{assigneeName}</span>
                 <ChevronDown

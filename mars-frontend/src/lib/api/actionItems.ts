@@ -2,6 +2,7 @@ import { apiRequest } from './httpClient';
 
 export interface ActionItemResponse {
   id: string;
+  project_id?: string | null;
   meeting_id?: string | null;
   assignee_id?: string | null;
   description?: string | null;
@@ -37,6 +38,10 @@ export interface ActionItemCreateRequest {
   deadline?: string | null;
 }
 
+export interface ActionItemStatusUpdateRequest {
+  status: string;
+}
+
 export interface GetProjectActionItemsParams {
   status?: string;
   assignee_id?: string;
@@ -47,6 +52,19 @@ export const createActionItem = (body: ActionItemCreateRequest) => {
   return apiRequest<ActionItemResponse>('/action-items', {
     method: 'POST',
     body,
+  });
+};
+
+export const updateActionItemStatus = (itemId: string, body: ActionItemStatusUpdateRequest) => {
+  return apiRequest<ActionItemResponse>(`/action-items/${encodeURIComponent(itemId)}/status`, {
+    method: 'PATCH',
+    body,
+  });
+};
+
+export const deleteActionItem = (itemId: string) => {
+  return apiRequest<unknown>(`/action-items/${encodeURIComponent(itemId)}`, {
+    method: 'DELETE',
   });
 };
 

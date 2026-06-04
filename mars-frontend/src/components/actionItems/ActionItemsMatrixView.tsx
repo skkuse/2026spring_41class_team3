@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from 'react';
+import { useState } from 'react';
 import { CircleHelp } from 'lucide-react';
 import { matrixQuadrants } from './actionItemConfig';
 import ActionItemCard from './ActionItemCard';
@@ -8,7 +8,6 @@ interface ActionItemsMatrixViewProps {
   groupedItems: Record<ActionItemPriority, ActionItem[]>;
   users: User[];
   onAssigneeChange: (itemId: string, assigneeId: string) => void;
-  onPriorityChange: (itemId: string, priority: ActionItemPriority) => void;
   onDelete: (itemId: string) => void;
 }
 
@@ -16,51 +15,21 @@ function ActionItemsMatrixView({
   groupedItems,
   users,
   onAssigneeChange,
-  onPriorityChange,
   onDelete,
 }: ActionItemsMatrixViewProps) {
   const [openDescription, setOpenDescription] =
     useState<ActionItemPriority | null>(null);
-  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
-  const [activeDropPriority, setActiveDropPriority] =
-    useState<ActionItemPriority | null>(null);
-
-  const handleDrop = (
-    event: DragEvent<HTMLDivElement>,
-    priority: ActionItemPriority,
-  ) => {
-    event.preventDefault();
-    const itemId = event.dataTransfer.getData('text/plain');
-
-    if (itemId) {
-      onPriorityChange(itemId, priority);
-    }
-
-    setDraggingItemId(null);
-    setActiveDropPriority(null);
-  };
 
   return (
     <section className="grid gap-4 lg:grid-cols-2">
       {matrixQuadrants.map((quadrant) => {
         const items = groupedItems[quadrant.key] ?? [];
         const isDescriptionOpen = openDescription === quadrant.key;
-        const isActiveDropZone = activeDropPriority === quadrant.key;
 
         return (
           <div
             key={quadrant.key}
-            className={[
-              `min-h-[320px] rounded-lg border ${quadrant.marker} bg-secondary p-5 transition`,
-              isActiveDropZone ? 'bg-primary/5 ring-2 ring-primary/30' : '',
-            ].join(' ')}
-            onDragOver={(event) => {
-              event.preventDefault();
-              event.dataTransfer.dropEffect = 'move';
-              setActiveDropPriority(quadrant.key);
-            }}
-            onDragLeave={() => setActiveDropPriority(null)}
-            onDrop={(event) => handleDrop(event, quadrant.key)}
+            className={`min-h-[320px] rounded-lg border ${quadrant.marker} bg-secondary p-5 transition`}
           >
             <div className="mb-5 flex items-center justify-between gap-3">
               <div className="min-w-0">
@@ -103,12 +72,7 @@ function ActionItemsMatrixView({
                   users={users}
                   onAssigneeChange={onAssigneeChange}
                   onDelete={onDelete}
-                  onDragStart={setDraggingItemId}
-                  onDragEnd={() => {
-                    setDraggingItemId(null);
-                    setActiveDropPriority(null);
-                  }}
-                  isDragging={draggingItemId === item.id}
+                  canDrag={false}
                   compact
                 />
               ))}

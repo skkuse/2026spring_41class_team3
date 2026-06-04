@@ -159,6 +159,7 @@ function MeetingInputPanel() {
         projectId,
         meetingId,
         requestedAt,
+        assigneeId: firstAssigneeId,
       });
       const draftItems = extractedActionItems.map((item) => toActionItemDraft(item, firstAssigneeId, assigneeOptions));
 

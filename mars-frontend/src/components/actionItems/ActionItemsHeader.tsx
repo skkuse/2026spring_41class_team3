@@ -1,7 +1,6 @@
 import { LayoutGrid, ListChecks } from 'lucide-react';
 import { priorityLegend } from './actionItemConfig';
-import ActionItemCreateBox from './ActionItemCreateBox';
-import type { ActionItemsViewMode, NewActionItemInput, User } from './types';
+import type { ActionItemsViewMode, User } from './types';
 
 interface ActionItemsHeaderProps {
   viewMode: ActionItemsViewMode;
@@ -10,7 +9,6 @@ interface ActionItemsHeaderProps {
   currentUserId: string;
   showOnlyMine: boolean;
   onShowOnlyMineChange: (showOnlyMine: boolean) => void;
-  onCreateActionItem: (input: NewActionItemInput) => void;
 }
 
 function ActionItemsHeader({
@@ -20,8 +18,9 @@ function ActionItemsHeader({
   currentUserId,
   showOnlyMine,
   onShowOnlyMineChange,
-  onCreateActionItem,
 }: ActionItemsHeaderProps) {
+  const currentUser = users.find((user) => user.id === currentUserId);
+
   return (
     <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
       <div>
@@ -48,8 +47,9 @@ function ActionItemsHeader({
             <input
               type="checkbox"
               checked={showOnlyMine}
+              disabled={!currentUser}
               onChange={(event) => onShowOnlyMineChange(event.target.checked)}
-              className="h-4 w-4 accent-primary"
+              className="h-4 w-4 accent-primary disabled:cursor-not-allowed disabled:opacity-50"
             />
             나의 할일만 보기
           </label>
@@ -85,12 +85,6 @@ function ActionItemsHeader({
             </button>
           </div>
         </div>
-
-        <ActionItemCreateBox
-          users={users}
-          currentUserId={currentUserId}
-          onCreate={onCreateActionItem}
-        />
       </div>
     </header>
   );

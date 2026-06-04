@@ -15,10 +15,12 @@ export const fetchExtractedActionItems = async ({
   projectId,
   meetingId,
   requestedAt,
+  assigneeId,
 }: {
   projectId: string;
   meetingId?: string;
   requestedAt: string;
+  assigneeId?: string;
 }) => {
   const maxAttempts = 4;
 
@@ -28,6 +30,7 @@ export const fetchExtractedActionItems = async ({
     }
 
     const actionItems = await getProjectActionItems(projectId, {
+      assignee_id: assigneeId,
       sort: 'created_at',
     });
     const extractedItems = filterExtractedActionItems(actionItems, meetingId, requestedAt);
@@ -44,10 +47,12 @@ export const createAndFetchMeetingActionItems = async ({
   projectId,
   meetingId,
   requestedAt,
+  assigneeId,
 }: {
   projectId: string;
   meetingId: string;
   requestedAt: string;
+  assigneeId?: string;
 }) => {
   const analyzedMeeting = await createMeetingActionItems(meetingId);
   const fallbackItems = (analyzedMeeting.action_items ?? []).map((item, index) =>
@@ -59,6 +64,7 @@ export const createAndFetchMeetingActionItems = async ({
       projectId,
       meetingId,
       requestedAt,
+      assigneeId,
     });
 
     if (fetchedItems.length > 0) {
