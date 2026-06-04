@@ -18,6 +18,8 @@ export interface MeetingResponse {
   productivity_score?: number | null;
   created_at?: string | null;
   date?: string | null;
+  next_agenda?: string[] | null;
+  proposed_agendas?: string[] | null;
 }
 
 export const createMeeting = (projectId: string, body: MeetingCreateRequest) => {
