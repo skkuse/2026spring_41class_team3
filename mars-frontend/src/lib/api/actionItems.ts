@@ -13,11 +13,34 @@ export interface ActionItemResponse {
   created_at?: string | null;
 }
 
+export interface MeetingAnalyzeActionItem {
+  task: string;
+  priority: number;
+}
+
+export interface MeetingAnalyzeResponse {
+  meeting_id: string;
+  summary: string;
+  action_items: MeetingAnalyzeActionItem[];
+  qualitative_feedback: string;
+  next_agenda: string[];
+}
+
 export interface GetProjectActionItemsParams {
   status?: string;
   assignee_id?: string;
   sort?: string;
 }
+
+export const createMeetingActionItems = (meetingId: string) => {
+  return apiRequest<MeetingAnalyzeResponse>(
+    `/meetings/${encodeURIComponent(meetingId)}/analyze`,
+    {
+      method: 'POST',
+      timeoutMs: 120000,
+    },
+  );
+};
 
 export const getProjectActionItems = (projectId: string, params: GetProjectActionItemsParams = {}) => {
   const query = new URLSearchParams();

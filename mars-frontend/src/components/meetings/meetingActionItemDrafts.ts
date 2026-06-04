@@ -1,6 +1,6 @@
-import type { ActionItemPriority, ActionItemStatus } from '../actionItems/types';
-import { getProjectActionItems } from '../../lib/api';
-import type { ActionItemResponse } from '../../lib/api';
+import type { ActionItemPriority, ActionItemStatus, User } from '../actionItems/types';
+import { createMeetingActionItems, getProjectActionItems } from '../../lib/api';
+import type { ActionItemResponse, MeetingAnalyzeActionItem } from '../../lib/api';
 
 export interface ExtractedActionItemDraft {
   id: string;
@@ -40,14 +40,52 @@ export const fetchExtractedActionItems = async ({
   return [];
 };
 
+export const createAndFetchMeetingActionItems = async ({
+  projectId,
+  meetingId,
+  requestedAt,
+}: {
+  projectId: string;
+  meetingId: string;
+  requestedAt: string;
+}) => {
+  const analyzedMeeting = await createMeetingActionItems(meetingId);
+  const fallbackItems = (analyzedMeeting.action_items ?? []).map((item, index) =>
+    toActionItemResponseFallback(item, meetingId, index),
+  );
+
+  try {
+    const fetchedItems = await fetchExtractedActionItems({
+      projectId,
+      meetingId,
+      requestedAt,
+    });
+
+    if (fetchedItems.length > 0) {
+      return fetchedItems;
+    }
+  } catch (error) {
+    console.error('[Meetings][ActionItems:FetchAfterAnalyzeFailed]', {
+      projectId,
+      meetingId,
+      error,
+    });
+  }
+
+  return fallbackItems;
+};
+
 export const toActionItemDraft = (
   item: ActionItemResponse,
   fallbackAssigneeId: string,
+  assigneeOptions: User[] = [],
 ): ExtractedActionItemDraft => {
+  const parsedTask = parseAssigneeTask(item.description ?? '', assigneeOptions, fallbackAssigneeId);
+
   return {
     id: item.id,
-    description: item.description ?? '',
-    assignee_id: item.assignee_id ?? fallbackAssigneeId,
+    description: parsedTask.description,
+    assignee_id: item.assignee_id ?? parsedTask.assigneeId,
     status: toActionItemStatus(item.status),
     priority: toActionItemPriority(item.priority, item.importance, item.urgency),
     deadline: formatDateInputValue(item.deadline) || getFutureDate(7),
@@ -83,6 +121,44 @@ const filterExtractedActionItems = (
   });
 };
 
+const toActionItemResponseFallback = (
+  item: MeetingAnalyzeActionItem,
+  meetingId: string,
+  index: number,
+): ActionItemResponse => {
+  return {
+    id: `generated-${meetingId}-${index}`,
+    meeting_id: meetingId,
+    description: item.task,
+    priority: item.priority,
+    status: 'TODO',
+    created_at: new Date().toISOString(),
+  };
+};
+
+const parseAssigneeTask = (
+  description: string,
+  assigneeOptions: User[],
+  fallbackAssigneeId: string,
+) => {
+  const [maybeAssigneeName, ...taskParts] = description.split(':');
+  const taskDescription = taskParts.join(':').trim();
+
+  if (!maybeAssigneeName || !taskDescription) {
+    return {
+      assigneeId: fallbackAssigneeId,
+      description,
+    };
+  }
+
+  const matchedAssignee = assigneeOptions.find((user) => user.name === maybeAssigneeName.trim());
+
+  return {
+    assigneeId: matchedAssignee?.id ?? fallbackAssigneeId,
+    description: taskDescription,
+  };
+};
+
 const toActionItemStatus = (status?: string | null): ActionItemStatus => {
   const normalizedStatus = status?.toUpperCase();
 
@@ -99,12 +175,16 @@ const toActionItemPriority = (
   urgency?: number | null,
 ): ActionItemPriority => {
   if (priority !== null && priority !== undefined) {
-    if (priority >= 3) {
+    if (priority <= 1) {
       return 'DO';
     }
 
-    if (priority <= 1) {
-      return 'DELETE';
+    if (priority === 2) {
+      return 'SCHEDULE';
+    }
+
+    if (priority === 3) {
+      return 'DELEGATE';
     }
   }
 
