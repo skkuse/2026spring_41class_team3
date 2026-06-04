@@ -1,5 +1,6 @@
 import { useState, type DragEvent } from 'react';
 import { CircleHelp } from 'lucide-react';
+import { typography } from '../../lib/typography';
 import { matrixQuadrants } from './actionItemConfig';
 import ActionItemCard from './ActionItemCard';
 import type { ActionItem, ActionItemPriority, User } from './types';
@@ -67,7 +68,7 @@ function ActionItemsMatrixView({
             <div className="mb-5 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl text-foreground">{quadrant.title}</h2>
+                  <h2 className={typography.sectionTitle}>{quadrant.title}</h2>
                   <span className="relative flex items-center">
                     <button
                       type="button"

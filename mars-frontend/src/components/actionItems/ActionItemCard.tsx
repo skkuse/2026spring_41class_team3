@@ -6,6 +6,7 @@ import {
   GripVertical,
   Trash2,
 } from 'lucide-react';
+import { typography } from '../../lib/typography';
 import { priorityConfig } from './actionItemConfig';
 import type { ActionItem, User } from './types';
 
@@ -70,7 +71,7 @@ function ActionItemCard({
         'group relative rounded-lg border border-border transition hover:border-primary/50',
         isDueTomorrow ? 'bg-destructive/10 border-destructive/40' : 'bg-card',
         isDragging ? 'opacity-50 ring-2 ring-primary/40' : '',
-        compact ? 'p-4' : 'min-h-[154px] p-6',
+        compact ? 'p-4' : 'min-h-[132px] p-5',
       ].join(' ')}
     >
       <div
@@ -89,8 +90,7 @@ function ActionItemCard({
           <div className="flex items-start justify-between gap-3">
             <h3
               className={[
-                "font-['Rajdhani'] font-semibold leading-snug text-foreground",
-                compact ? 'text-lg' : 'text-xl',
+                compact ? typography.cardTitle : typography.cardTitleLarge,
               ].join(' ')}
             >
               {item.description}

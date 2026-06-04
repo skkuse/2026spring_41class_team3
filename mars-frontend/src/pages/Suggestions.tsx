@@ -5,6 +5,7 @@ import { getProposedAgendas } from '../lib/api';
 import type { AgendaResponse } from '../lib/api';
 import { formatKoreanDate } from '../lib/date';
 import { getStoredProjectContext } from '../lib/projectContext';
+import { typography } from '../lib/typography';
 
 interface AgendaItem {
   id: string;
@@ -73,21 +74,12 @@ function Suggestions() {
   }, [projectId]);
 
   const handleStartMeeting = (item: AgendaItem) => {
-    if (item.sourceMeetingId) {
-      navigate('/meetings/past', {
-        state: {
-          selectedMeetingId: item.sourceMeetingId,
-        },
-      });
-      return;
-    }
-
     navigate('/meetings', {
       state: {
         meetingDraft: {
-          title: '',
-          purpose: item.title,
-          rawText: '',
+          title: item.title,
+          purpose: `차기 안건 논의: ${item.title}`,
+          rawText: item.description || item.title,
         },
       },
     });
@@ -97,8 +89,8 @@ function Suggestions() {
     <main className="min-h-full bg-background px-6 py-8 text-foreground md:px-10">
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header>
-          <h1 className="text-2xl text-primary">제안</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className={typography.pageTitle}>제안</h1>
+          <p className={`mt-1 ${typography.pageDescription}`}>
             생성된 차기 회의 안건을 확인하고 바로 회의 입력으로 이어가세요.
           </p>
         </header>
@@ -107,7 +99,7 @@ function Suggestions() {
           <div className="mb-4 flex items-center justify-between gap-3 border-b border-border pb-3">
             <div className="flex items-center gap-2">
               <Lightbulb className="h-4 w-4 text-primary" />
-              <h2 className="text-lg text-foreground">차기 안건</h2>
+              <h2 className={typography.sectionTitle}>차기 안건</h2>
             </div>
             <div className="flex items-center gap-2 rounded-md border border-border bg-secondary px-3 py-1.5 text-xs text-muted-foreground">
               <Calendar className="h-4 w-4" />
@@ -130,16 +122,16 @@ function Suggestions() {
               아직 생성된 차기 안건이 없습니다.
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {agendaItems.map((item) => (
                 <article
                   key={item.id}
-                  className="flex flex-col gap-3 rounded-lg border border-border bg-secondary px-4 py-3 transition hover:border-primary/50 md:flex-row md:items-center md:justify-between"
+                  className="grid gap-3 rounded-lg border border-border bg-secondary px-4 py-3 transition hover:border-primary/40 md:grid-cols-[1fr_auto] md:items-center"
                 >
                   <div className="min-w-0">
-                    <h3 className="text-base font-semibold leading-snug text-foreground">{item.title}</h3>
+                    <h3 className={typography.cardTitleLarge}>{item.title}</h3>
                     {item.description && item.description !== item.title ? (
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      <p className={`mt-1 ${typography.body}`}>
                         {item.description}
                       </p>
                     ) : null}
@@ -149,10 +141,10 @@ function Suggestions() {
                   </div>
                   <button
                     type="button"
-                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:border-primary/50 hover:bg-muted hover:text-primary"
+                    className={`inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-card px-3 text-foreground transition hover:border-primary/50 hover:bg-muted hover:text-primary ${typography.control}`}
                     onClick={() => handleStartMeeting(item)}
                   >
-                    {item.sourceMeetingId ? '지난 회의 기록 보기' : '이 안건으로 회의하기'}
+                    이 안건으로 회의하기
                     <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </article>

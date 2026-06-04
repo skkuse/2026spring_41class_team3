@@ -1,4 +1,5 @@
 import { useState, type DragEvent } from 'react';
+import { typography } from '../../lib/typography';
 import { statusColumns } from './actionItemConfig';
 import ActionItemCard from './ActionItemCard';
 import type { ActionItem, ActionItemStatus, User } from './types';
@@ -66,9 +67,9 @@ function ActionItemsListView({
           >
             <div className="flex items-center gap-3">
               <Icon className={`h-6 w-6 ${column.accent}`} strokeWidth={2} />
-              <h2 className="text-xl text-foreground">
+              <h2 className={typography.sectionTitle}>
                 {column.title}{' '}
-                <span className="text-lg text-muted-foreground">
+                <span className="text-base text-muted-foreground">
                   ({items.length})
                 </span>
               </h2>

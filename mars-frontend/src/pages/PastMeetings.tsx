@@ -6,6 +6,7 @@ import { deleteMeeting, getMeeting, getProjectActionItems, getProjectMembers } f
 import type { ActionItemResponse, MeetingResponse } from '../lib/api';
 import { formatKoreanDate } from '../lib/date';
 import { getStoredProjectContext } from '../lib/projectContext';
+import { typography } from '../lib/typography';
 
 function PastMeetings() {
   const location = useLocation();
@@ -155,8 +156,8 @@ function PastMeetings() {
     <main className="min-h-full bg-background px-6 py-8 text-foreground md:px-10">
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header>
-          <h1 className="text-3xl text-primary">지난 회의</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className={typography.pageTitle}>지난 회의</h1>
+          <p className={`mt-1 ${typography.pageDescription}`}>
             이전 회의의 내용과 추출된 액션 아이템 진행 현황을 확인하세요.
           </p>
         </header>
