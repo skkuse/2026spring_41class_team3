@@ -8,11 +8,16 @@ interface ExtractedActionItemsEditorProps {
   assigneeOptions: User[];
   onAddItem: () => void;
   onDeleteItem: (itemId: string) => void;
+  onConfirmItems: () => void;
+  onStartAdditionalMeeting: () => void;
+  onViewActionItems: () => void;
   onItemChange: (
     itemId: string,
     field: keyof Omit<ExtractedActionItemDraft, 'id'>,
     value: string,
   ) => void;
+  isConfirming: boolean;
+  isConfirmed: boolean;
 }
 
 function ExtractedActionItemsEditor({
@@ -20,8 +25,15 @@ function ExtractedActionItemsEditor({
   assigneeOptions,
   onAddItem,
   onDeleteItem,
+  onConfirmItems,
+  onStartAdditionalMeeting,
+  onViewActionItems,
   onItemChange,
+  isConfirming,
+  isConfirmed,
 }: ExtractedActionItemsEditorProps) {
+  const isLocked = isConfirming || isConfirmed;
+
   return (
     <div className="mt-8 border-t border-border pt-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -35,6 +47,7 @@ function ExtractedActionItemsEditor({
         <button
           type="button"
           onClick={onAddItem}
+          disabled={isLocked}
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground transition hover:border-primary/50 hover:bg-muted"
         >
           <Plus className="h-4 w-4" />
@@ -52,6 +65,7 @@ function ExtractedActionItemsEditor({
               assigneeOptions={assigneeOptions}
               onDeleteItem={onDeleteItem}
               onItemChange={onItemChange}
+              isLocked={isLocked}
             />
           ))
         ) : (
@@ -65,18 +79,45 @@ function ExtractedActionItemsEditor({
 
       {items.length > 0 && (
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            className="rounded-lg border border-border px-5 py-2.5 text-sm text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
-          >
-            임시 저장
-          </button>
-          <button
-            type="button"
-            className="rounded-lg bg-primary px-5 py-2.5 text-sm text-primary-foreground transition hover:bg-primary/90"
-          >
-            수정 내용 확정
-          </button>
+          {isConfirmed ? (
+            <>
+              <div className="flex items-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-500">
+                액션아이템 등록 완료!
+              </div>
+              <button
+                type="button"
+                onClick={onStartAdditionalMeeting}
+                className="rounded-lg border border-border px-5 py-2.5 text-sm text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
+              >
+                추가 회의 입력하기
+              </button>
+              <button
+                type="button"
+                onClick={onViewActionItems}
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm text-primary-foreground transition hover:bg-primary/90"
+              >
+                액션 아이템 확인하기
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled={isConfirming}
+                className="rounded-lg border border-border px-5 py-2.5 text-sm text-muted-foreground transition hover:border-primary/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                임시 저장
+              </button>
+              <button
+                type="button"
+                onClick={onConfirmItems}
+                disabled={isConfirming}
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isConfirming ? '확정 중...' : '수정 내용 확정'}
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -88,6 +129,7 @@ interface ExtractedActionItemCardProps {
   index: number;
   assigneeOptions: User[];
   onDeleteItem: (itemId: string) => void;
+  isLocked: boolean;
   onItemChange: (
     itemId: string,
     field: keyof Omit<ExtractedActionItemDraft, 'id'>,
@@ -101,6 +143,7 @@ function ExtractedActionItemCard({
   assigneeOptions,
   onDeleteItem,
   onItemChange,
+  isLocked,
 }: ExtractedActionItemCardProps) {
   return (
     <article className="rounded-lg border border-border bg-secondary/60 p-4">
@@ -114,6 +157,7 @@ function ExtractedActionItemCard({
           <textarea
             value={item.description}
             onChange={(event) => onItemChange(item.id, 'description', event.target.value)}
+            disabled={isLocked}
             rows={2}
             placeholder="액션 아이템 내용을 입력하세요."
             className="mt-1 min-h-16 w-full resize-y rounded-md border border-input bg-input-background px-3 py-2 text-sm leading-6 text-foreground outline-none transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-ring"
@@ -124,6 +168,7 @@ function ExtractedActionItemCard({
           type="button"
           aria-label="액션 아이템 삭제"
           onClick={() => onDeleteItem(item.id)}
+          disabled={isLocked}
           className="mt-5 rounded-md p-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" />
@@ -136,6 +181,7 @@ function ExtractedActionItemCard({
           <select
             value={item.assignee_id}
             onChange={(event) => onItemChange(item.id, 'assignee_id', event.target.value)}
+            disabled={isLocked}
             className="mt-1 w-full rounded-md border border-input bg-input-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-ring"
           >
             {!item.assignee_id && (
@@ -154,6 +200,7 @@ function ExtractedActionItemCard({
           <select
             value={item.status}
             onChange={(event) => onItemChange(item.id, 'status', event.target.value as ActionItemStatus)}
+            disabled={isLocked}
             className="mt-1 w-full rounded-md border border-input bg-input-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-ring"
           >
             {statusColumns.map((status) => (
@@ -169,6 +216,7 @@ function ExtractedActionItemCard({
           <select
             value={item.priority}
             onChange={(event) => onItemChange(item.id, 'priority', event.target.value as ActionItemPriority)}
+            disabled={isLocked}
             className="mt-1 w-full rounded-md border border-input bg-input-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-ring"
           >
             {matrixQuadrants.map((priority) => (
@@ -185,6 +233,7 @@ function ExtractedActionItemCard({
             type="date"
             value={item.deadline}
             onChange={(event) => onItemChange(item.id, 'deadline', event.target.value)}
+            disabled={isLocked}
             className="mt-1 w-full rounded-md border border-input bg-input-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-ring"
           />
         </label>

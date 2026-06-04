@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { User } from '../actionItems/types';
 import ExtractedActionItemsEditor from './ExtractedActionItemsEditor';
 import {
@@ -8,8 +9,8 @@ import {
   toActionItemDraft,
   type ExtractedActionItemDraft,
 } from './meetingActionItemDrafts';
-import { createMeeting, getProjectMembers } from '../../lib/api';
-import type { MeetingResponse } from '../../lib/api';
+import { createActionItem, createMeeting, getProjectMembers } from '../../lib/api';
+import type { ActionItemCreateRequest, MeetingResponse } from '../../lib/api';
 import { getStoredProjectContext } from '../../lib/projectContext';
 
 // import UploadOptionCard from './UploadOptionCard';
@@ -17,11 +18,14 @@ import { getStoredProjectContext } from '../../lib/projectContext';
 const placeholder = `이곳에 입력해주세요.`;
 
 function MeetingInputPanel() {
+  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [purpose, setPurpose] = useState('');
   const [rawText, setRawText] = useState('');
   const [isCreatingMeeting, setIsCreatingMeeting] = useState(false);
   const [isExtractingActionItems, setIsExtractingActionItems] = useState(false);
+  const [isConfirmingActionItems, setIsConfirmingActionItems] = useState(false);
+  const [hasConfirmedActionItems, setHasConfirmedActionItems] = useState(false);
   const [message, setMessage] = useState('');
   const [messageTone, setMessageTone] = useState<'success' | 'error'>('success');
   const [createdMeeting, setCreatedMeeting] = useState<MeetingResponse | null>(null);
@@ -29,7 +33,7 @@ function MeetingInputPanel() {
   const [assigneeOptions, setAssigneeOptions] = useState<User[]>([]);
   const firstAssigneeId = assigneeOptions[0]?.id ?? '';
   const isMeetingCreated = Boolean(createdMeeting?.id);
-  const isBusy = isCreatingMeeting || isExtractingActionItems;
+  const isBusy = isCreatingMeeting || isExtractingActionItems || isConfirmingActionItems;
   const pipelineSteps = [
     { label: '회의 입력', isActive: !isMeetingCreated, isDone: isMeetingCreated },
     { label: '회의 생성', isActive: isMeetingCreated && extractedItems.length === 0, isDone: isMeetingCreated },
@@ -184,6 +188,7 @@ function MeetingInputPanel() {
     setMessage('');
     setCreatedMeeting(null);
     setExtractedItems([]);
+    setHasConfirmedActionItems(false);
   };
 
   const handleItemChange = (
@@ -201,6 +206,10 @@ function MeetingInputPanel() {
   };
 
   const handleAddItem = () => {
+    if (hasConfirmedActionItems) {
+      return;
+    }
+
     setExtractedItems((items) => [
       ...items,
       {
@@ -215,7 +224,66 @@ function MeetingInputPanel() {
   };
 
   const handleDeleteItem = (itemId: string) => {
+    if (hasConfirmedActionItems) {
+      return;
+    }
+
     setExtractedItems((items) => items.filter((item) => item.id !== itemId));
+  };
+
+  const handleConfirmActionItems = async () => {
+    if (hasConfirmedActionItems) {
+      return;
+    }
+
+    const meetingId = createdMeeting?.id ?? '';
+
+    if (!meetingId) {
+      setMessageTone('error');
+      setMessage('먼저 회의를 생성해 주세요.');
+      return;
+    }
+
+    const invalidItem = extractedItems.find((item) => !item.description.trim() || !item.assignee_id);
+
+    if (invalidItem) {
+      setMessageTone('error');
+      setMessage('모든 액션 아이템의 세부 내용과 담당자를 입력해 주세요.');
+      return;
+    }
+
+    setIsConfirmingActionItems(true);
+    setMessage('');
+
+    try {
+      await Promise.all(
+        extractedItems.map((item) => createActionItem(toActionItemCreateRequest(item, meetingId))),
+      );
+
+      setMessageTone('success');
+      setMessage('액션 아이템이 확정되어 저장되었습니다.');
+      setHasConfirmedActionItems(true);
+    } catch (error) {
+      console.error('[Meetings][ActionItems:ConfirmFailed]', {
+        meetingId,
+        error,
+      });
+      setMessageTone('error');
+      setMessage('액션 아이템 저장에 실패했습니다. 입력값을 확인한 뒤 다시 시도해 주세요.');
+    } finally {
+      setIsConfirmingActionItems(false);
+    }
+  };
+
+  const handleStartAdditionalMeeting = () => {
+    setTitle('');
+    setPurpose('');
+    setRawText('');
+    setMessage('');
+    setCreatedMeeting(null);
+    setExtractedItems([]);
+    setHasConfirmedActionItems(false);
+    navigate('/meetings');
   };
 
   return (
@@ -335,7 +403,12 @@ function MeetingInputPanel() {
         assigneeOptions={assigneeOptions}
         onAddItem={handleAddItem}
         onDeleteItem={handleDeleteItem}
+        onConfirmItems={handleConfirmActionItems}
+        onStartAdditionalMeeting={handleStartAdditionalMeeting}
+        onViewActionItems={() => navigate('/actions')}
         onItemChange={handleItemChange}
+        isConfirming={isConfirmingActionItems}
+        isConfirmed={hasConfirmedActionItems}
       />
     </section>
   );
@@ -347,6 +420,67 @@ const getExtractActionItemsErrorMessage = (error: unknown) => {
   }
 
   return '액션 아이템 추출에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+};
+
+const toActionItemCreateRequest = (
+  item: ExtractedActionItemDraft,
+  meetingId: string,
+): ActionItemCreateRequest => {
+  const priorityLevels = getPriorityLevels(item.priority);
+
+  return {
+    assignee_id: item.assignee_id,
+    meeting_id: meetingId,
+    description: item.description.trim(),
+    status: item.status,
+    priority: toNumericPriority(item.priority),
+    importance: priorityLevels.importance,
+    urgency: priorityLevels.urgency,
+    deadline: toDeadlineISOString(item.deadline),
+  };
+};
+
+const toNumericPriority = (priority: ExtractedActionItemDraft['priority']) => {
+  if (priority === 'DO') {
+    return 3;
+  }
+
+  if (priority === 'SCHEDULE' || priority === 'DELEGATE') {
+    return 2;
+  }
+
+  return 1;
+};
+
+const getPriorityLevels = (priority: ExtractedActionItemDraft['priority']) => {
+  if (priority === 'DO') {
+    return { importance: 3, urgency: 3 };
+  }
+
+  if (priority === 'SCHEDULE') {
+    return { importance: 3, urgency: 1 };
+  }
+
+  if (priority === 'DELEGATE') {
+    return { importance: 1, urgency: 3 };
+  }
+
+  return { importance: 1, urgency: 1 };
+};
+
+const toDeadlineISOString = (deadline: string) => {
+  if (!deadline) {
+    return null;
+  }
+
+  const [year, month, date] = deadline.split('-').map(Number);
+  const parsedDeadline = new Date(year, month - 1, date, 23, 59, 59, 999);
+
+  if (Number.isNaN(parsedDeadline.getTime())) {
+    return null;
+  }
+
+  return parsedDeadline.toISOString();
 };
 
 export default MeetingInputPanel;

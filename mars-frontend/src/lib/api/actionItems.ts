@@ -26,11 +26,29 @@ export interface MeetingAnalyzeResponse {
   next_agenda: string[];
 }
 
+export interface ActionItemCreateRequest {
+  assignee_id: string;
+  meeting_id: string;
+  description: string;
+  status?: string;
+  priority?: number | null;
+  importance?: number | null;
+  urgency?: number | null;
+  deadline?: string | null;
+}
+
 export interface GetProjectActionItemsParams {
   status?: string;
   assignee_id?: string;
   sort?: string;
 }
+
+export const createActionItem = (body: ActionItemCreateRequest) => {
+  return apiRequest<ActionItemResponse>('/action-items', {
+    method: 'POST',
+    body,
+  });
+};
 
 export const createMeetingActionItems = (meetingId: string) => {
   return apiRequest<MeetingAnalyzeResponse>(
