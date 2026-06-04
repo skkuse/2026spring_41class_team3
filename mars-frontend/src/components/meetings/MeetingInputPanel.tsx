@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import type { User } from '../actionItems/types';
-import { usersData } from '../actionItems/usersData';
 import ExtractedActionItemsEditor from './ExtractedActionItemsEditor';
 import {
   createAndFetchMeetingActionItems,
@@ -16,7 +15,6 @@ import { getStoredProjectContext } from '../../lib/projectContext';
 // import UploadOptionCard from './UploadOptionCard';
 
 const placeholder = `이곳에 입력해주세요.`;
-const defaultAssigneeId = usersData[0]?.id ?? '';
 
 function MeetingInputPanel() {
   const [title, setTitle] = useState('');
@@ -28,8 +26,8 @@ function MeetingInputPanel() {
   const [messageTone, setMessageTone] = useState<'success' | 'error'>('success');
   const [createdMeeting, setCreatedMeeting] = useState<MeetingResponse | null>(null);
   const [extractedItems, setExtractedItems] = useState<ExtractedActionItemDraft[]>([]);
-  const [assigneeOptions, setAssigneeOptions] = useState<User[]>(usersData);
-  const firstAssigneeId = assigneeOptions[0]?.id ?? defaultAssigneeId;
+  const [assigneeOptions, setAssigneeOptions] = useState<User[]>([]);
+  const firstAssigneeId = assigneeOptions[0]?.id ?? '';
   const isMeetingCreated = Boolean(createdMeeting?.id);
   const isBusy = isCreatingMeeting || isExtractingActionItems;
   const pipelineSteps = [
@@ -52,7 +50,7 @@ function MeetingInputPanel() {
       try {
         const members = await getProjectMembers(projectId);
 
-        if (isMounted && members.length > 0) {
+        if (isMounted) {
           setAssigneeOptions(members);
         }
       } catch (error) {

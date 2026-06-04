@@ -85,7 +85,7 @@ export const toActionItemDraft = (
   return {
     id: item.id,
     description: parsedTask.description,
-    assignee_id: item.assignee_id ?? parsedTask.assigneeId,
+    assignee_id: parsedTask.hasAssigneePrefix ? parsedTask.assigneeId : item.assignee_id ?? parsedTask.assigneeId,
     status: toActionItemStatus(item.status),
     priority: toActionItemPriority(item.priority, item.importance, item.urgency),
     deadline: formatDateInputValue(item.deadline) || getFutureDate(7),
@@ -141,21 +141,26 @@ const parseAssigneeTask = (
   assigneeOptions: User[],
   fallbackAssigneeId: string,
 ) => {
-  const [maybeAssigneeName, ...taskParts] = description.split(':');
-  const taskDescription = taskParts.join(':').trim();
+  const taskMatch = description.match(/^([^:：\-–—]+)\s*[:：\-–—]\s*(.+)$/);
 
-  if (!maybeAssigneeName || !taskDescription) {
+  if (!taskMatch) {
     return {
       assigneeId: fallbackAssigneeId,
       description,
+      hasMatchedAssignee: false,
+      hasAssigneePrefix: false,
     };
   }
 
-  const matchedAssignee = assigneeOptions.find((user) => user.name === maybeAssigneeName.trim());
+  const assigneeName = taskMatch[1].trim();
+  const taskDescription = taskMatch[2].trim();
+  const matchedAssignee = assigneeOptions.find((user) => user.name === assigneeName);
 
   return {
     assigneeId: matchedAssignee?.id ?? fallbackAssigneeId,
     description: taskDescription,
+    hasMatchedAssignee: Boolean(matchedAssignee),
+    hasAssigneePrefix: true,
   };
 };
 
