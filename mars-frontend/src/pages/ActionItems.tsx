@@ -29,7 +29,7 @@ function ActionItems() {
   const [viewMode, setViewMode] = useState<ActionItemsViewMode>('리스트');
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [showOnlyMine, setShowOnlyMine] = useState(false);
+  const [showAllItems, setShowAllItems] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageTone, setMessageTone] = useState<'success' | 'error'>('success');
@@ -53,10 +53,20 @@ function ActionItems() {
       setIsLoading(true);
       setMessage('');
 
-      const [projectMembersResult, projectActionItemsResult] = await Promise.allSettled([
-        getProjectMembers(projectId),
-        loadProjectActionItems(projectId, currentUserId),
-      ]);
+      const projectMembersResult = await getProjectMembers(projectId)
+        .then((projectMembers) => ({ status: 'fulfilled' as const, value: projectMembers }))
+        .catch((error: unknown) => ({ status: 'rejected' as const, reason: error }));
+      const assigneeIds = projectMembersResult.status === 'fulfilled'
+        ? projectMembersResult.value.map((member) => member.id)
+        : [];
+      const projectActionItemsResult = await loadProjectActionItems({
+        projectId,
+        currentUserId,
+        assigneeIds,
+        shouldLoadAll: showAllItems,
+      })
+        .then((projectActionItems) => ({ status: 'fulfilled' as const, value: projectActionItems }))
+        .catch((error: unknown) => ({ status: 'rejected' as const, reason: error }));
 
       if (!isMounted) {
         return;
@@ -76,7 +86,7 @@ function ActionItems() {
         setActionItems(projectActionItemsResult.value.items.map(toActionItem));
         setMessageTone('success');
         setMessage(projectActionItemsResult.value.isFallback
-          ? '정렬 조회가 실패해 기본 조회 결과로 표시합니다.'
+          ? '일부 조회가 실패해 불러온 액션 아이템만 표시합니다.'
           : projectMembersResult.status === 'rejected'
             ? '담당자 목록을 불러오지 못했지만 액션 아이템은 표시합니다.'
           : '');
@@ -98,14 +108,11 @@ function ActionItems() {
     return () => {
       isMounted = false;
     };
-  }, [currentUserId, projectId]);
+  }, [currentUserId, projectId, showAllItems]);
 
   const visibleActionItems = useMemo(
-    () =>
-      showOnlyMine
-        ? actionItems.filter((item) => item.assignee_id === currentUserId)
-        : actionItems,
-    [actionItems, currentUserId, showOnlyMine],
+    () => actionItems,
+    [actionItems],
   );
 
   const statusGroups = useMemo(
@@ -174,8 +181,8 @@ function ActionItems() {
           onViewModeChange={setViewMode}
           users={users}
           currentUserId={currentUserId}
-          showOnlyMine={showOnlyMine}
-          onShowOnlyMineChange={setShowOnlyMine}
+          showAllItems={showAllItems}
+          onShowAllItemsChange={setShowAllItems}
         />
 
         {(message || projectContextErrorMessage) && (
@@ -215,7 +222,21 @@ function ActionItems() {
   );
 }
 
-const loadProjectActionItems = async (projectId: string, currentUserId: string) => {
+const loadProjectActionItems = async ({
+  projectId,
+  currentUserId,
+  assigneeIds,
+  shouldLoadAll,
+}: {
+  projectId: string;
+  currentUserId: string;
+  assigneeIds: string[];
+  shouldLoadAll: boolean;
+}) => {
+  if (shouldLoadAll && assigneeIds.length > 0) {
+    return loadProjectActionItemsByAssignees(projectId, assigneeIds);
+  }
+
   const assigneeId = currentUserId || undefined;
 
   try {
@@ -250,6 +271,41 @@ const loadProjectActionItems = async (projectId: string, currentUserId: string) 
       throw fallbackError;
     }
   }
+};
+
+const loadProjectActionItemsByAssignees = async (projectId: string, assigneeIds: string[]) => {
+  const actionItemResults = await Promise.allSettled(
+    assigneeIds
+      .filter(Boolean)
+      .map(async (assigneeId) => {
+        try {
+          return await getProjectActionItems(projectId, {
+            assignee_id: assigneeId,
+            sort: 'created_at_desc',
+          });
+        } catch (error) {
+          console.error('[ActionItems][AssigneeSortedLoadFailed]', {
+            projectId,
+            assigneeId,
+            error,
+          });
+
+          return getProjectActionItems(projectId, { assignee_id: assigneeId });
+        }
+      }),
+  );
+  const fulfilledItems = actionItemResults.flatMap((result) =>
+    result.status === 'fulfilled' ? result.value : [],
+  );
+
+  return {
+    items: dedupeActionItems(fulfilledItems),
+    isFallback: actionItemResults.some((result) => result.status === 'rejected'),
+  };
+};
+
+const dedupeActionItems = (items: ActionItemResponse[]) => {
+  return Array.from(new Map(items.map((item) => [item.id, item])).values());
 };
 
 const toActionItem = (item: ActionItemResponse): ActionItem => {

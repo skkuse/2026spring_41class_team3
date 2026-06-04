@@ -7,8 +7,8 @@ interface ActionItemsHeaderProps {
   onViewModeChange: (viewMode: ActionItemsViewMode) => void;
   users: User[];
   currentUserId: string;
-  showOnlyMine: boolean;
-  onShowOnlyMineChange: (showOnlyMine: boolean) => void;
+  showAllItems: boolean;
+  onShowAllItemsChange: (showAllItems: boolean) => void;
 }
 
 function ActionItemsHeader({
@@ -16,8 +16,8 @@ function ActionItemsHeader({
   onViewModeChange,
   users,
   currentUserId,
-  showOnlyMine,
-  onShowOnlyMineChange,
+  showAllItems,
+  onShowAllItemsChange,
 }: ActionItemsHeaderProps) {
   const currentUser = users.find((user) => user.id === currentUserId);
 
@@ -46,12 +46,12 @@ function ActionItemsHeader({
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <input
               type="checkbox"
-              checked={showOnlyMine}
+              checked={showAllItems}
               disabled={!currentUser}
-              onChange={(event) => onShowOnlyMineChange(event.target.checked)}
+              onChange={(event) => onShowAllItemsChange(event.target.checked)}
               className="h-4 w-4 accent-primary disabled:cursor-not-allowed disabled:opacity-50"
             />
-            나의 할일만 보기
+            전체 할일 보기
           </label>
 
           <div className="grid grid-cols-2 rounded-lg border border-border bg-secondary p-1">
