@@ -82,6 +82,8 @@ def update_action_item_priority(db: Session, item_id: uuid.UUID, item_update: Ac
         raise HTTPException(status_code=404, detail="해당 할 일을 찾을 수 없습니다.")
 
     target_item.priority = item_update.priority
+    target_item.importance = item_update.importance
+    target_item.urgency = item_update.urgency
     db.commit()
     db.refresh(target_item)
     return target_item

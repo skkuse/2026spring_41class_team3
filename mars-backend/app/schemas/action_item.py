@@ -25,6 +25,8 @@ class ActionItemAssigneeUpdate(BaseModel):
 
 class ActionItemPriorityUpdate(BaseModel):
     priority: int
+    importance: int
+    urgency: int
 
 
 class ActionItemResponse(BaseModel):
