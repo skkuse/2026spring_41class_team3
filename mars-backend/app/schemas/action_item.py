@@ -23,6 +23,10 @@ class ActionItemAssigneeUpdate(BaseModel):
     assignee_id: uuid.UUID
 
 
+class ActionItemPriorityUpdate(BaseModel):
+    priority: int
+
+
 class ActionItemResponse(BaseModel):
     id: uuid.UUID
     assignee_id: uuid.UUID

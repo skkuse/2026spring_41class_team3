@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models import ActionItem, User, Meeting
-from app.schemas import ActionItemCreate, ActionItemUpdate, ActionItemAssigneeUpdate
+from app.schemas import ActionItemCreate, ActionItemUpdate, ActionItemAssigneeUpdate, ActionItemPriorityUpdate
 from fastapi import HTTPException
 from typing import Optional
 import uuid
@@ -72,6 +72,16 @@ def update_action_item_assignee(db: Session, item_id: uuid.UUID, item_update: Ac
         raise HTTPException(status_code=404, detail="해당 유저(담당자)를 찾을 수 없습니다.")
 
     target_item.assignee_id = item_update.assignee_id
+    db.commit()
+    db.refresh(target_item)
+    return target_item
+
+def update_action_item_priority(db: Session, item_id: uuid.UUID, item_update: ActionItemPriorityUpdate) -> ActionItem:
+    target_item = db.query(ActionItem).filter(ActionItem.id == item_id).first()
+    if not target_item:
+        raise HTTPException(status_code=404, detail="해당 할 일을 찾을 수 없습니다.")
+
+    target_item.priority = item_update.priority
     db.commit()
     db.refresh(target_item)
     return target_item
