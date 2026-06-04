@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.schemas import ActionItemCreate, ActionItemUpdate, ActionItemResponse
-from app.crud.action_item import create_action_item, get_action_items, get_action_items_by_project, update_action_item_status
+from app.schemas import ActionItemCreate, ActionItemUpdate, ActionItemAssigneeUpdate, ActionItemResponse
+from app.crud.action_item import create_action_item, get_action_items, get_action_items_by_project, update_action_item_status, update_action_item_assignee
 from app.db.database import SessionLocal
 from typing import Optional
 import uuid
@@ -36,6 +36,11 @@ def list_project_action_items(
 @router.patch("/action-items/{item_id}/status", response_model=ActionItemResponse, summary="액션아이템 상태 업데이트")
 def patch_action_item(item_id: uuid.UUID, item_update: ActionItemUpdate, db: Session = Depends(get_db)):
     return update_action_item_status(db, item_id, item_update)
+
+
+@router.patch("/action-items/{item_id}/assignee", response_model=ActionItemResponse, summary="액션아이템 담당자 업데이트")
+def patch_action_item_assignee(item_id: uuid.UUID, item_update: ActionItemAssigneeUpdate, db: Session = Depends(get_db)):
+    return update_action_item_assignee(db, item_id, item_update)
 
 
 @router.delete("/action-items/{item_id}", summary="액션아이템 삭제")

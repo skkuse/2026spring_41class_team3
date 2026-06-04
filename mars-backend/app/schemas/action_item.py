@@ -19,6 +19,10 @@ class ActionItemUpdate(BaseModel):
     status: str
 
 
+class ActionItemAssigneeUpdate(BaseModel):
+    assignee_id: uuid.UUID
+
+
 class ActionItemResponse(BaseModel):
     id: uuid.UUID
     assignee_id: uuid.UUID
