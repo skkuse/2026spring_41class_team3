@@ -42,6 +42,10 @@ export interface ActionItemStatusUpdateRequest {
   status: string;
 }
 
+export interface ActionItemAssigneeUpdateRequest {
+  assignee_id: string;
+}
+
 export interface GetProjectActionItemsParams {
   status?: string;
   assignee_id?: string;
@@ -57,6 +61,13 @@ export const createActionItem = (body: ActionItemCreateRequest) => {
 
 export const updateActionItemStatus = (itemId: string, body: ActionItemStatusUpdateRequest) => {
   return apiRequest<ActionItemResponse>(`/action-items/${encodeURIComponent(itemId)}/status`, {
+    method: 'PATCH',
+    body,
+  });
+};
+
+export const updateActionItemAssignee = (itemId: string, body: ActionItemAssigneeUpdateRequest) => {
+  return apiRequest<ActionItemResponse>(`/action-items/${encodeURIComponent(itemId)}/assignee`, {
     method: 'PATCH',
     body,
   });

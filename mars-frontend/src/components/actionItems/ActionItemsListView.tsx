@@ -93,6 +93,7 @@ function ActionItemsListView({
                     users={users}
                     onAssigneeChange={onAssigneeChange}
                     onDelete={onDelete}
+                    canChangeAssignee
                     onDragStart={setDraggingItemId}
                     onDragEnd={() => {
                       setDraggingItemId(null);

@@ -3,7 +3,7 @@ import ActionItemsHeader from '../components/actionItems/ActionItemsHeader';
 import ActionItemsListView from '../components/actionItems/ActionItemsListView';
 import ActionItemsMatrixView from '../components/actionItems/ActionItemsMatrixView';
 import { groupActionItems } from '../components/actionItems/groupActionItems';
-import { deleteActionItem, getProjectActionItems, getProjectMembers, updateActionItemStatus } from '../lib/api';
+import { deleteActionItem, getProjectActionItems, getProjectMembers, updateActionItemAssignee, updateActionItemStatus } from '../lib/api';
 import type { ActionItemResponse } from '../lib/api';
 import { getStoredProjectContext } from '../lib/projectContext';
 import type {
@@ -124,13 +124,27 @@ function ActionItems() {
     [visibleActionItems],
   );
 
-  const handleAssigneeChange = (itemId: string, assigneeId: string) => {
-    console.warn('[ActionItems][API] 담당자 변경 엔드포인트 없음', {
-      itemId,
-      assigneeId,
-    });
-    setMessageTone('error');
-    setMessage('담당자 변경 API가 아직 없어 저장할 수 없습니다.');
+  const handleAssigneeChange = async (itemId: string, assigneeId: string) => {
+    const previousItems = actionItems;
+
+    setActionItems((items) => items.map((item) => (item.id === itemId ? { ...item, assignee_id: assigneeId } : item)));
+    setMessage('');
+
+    try {
+      const updatedItem = await updateActionItemAssignee(itemId, { assignee_id: assigneeId });
+      setActionItems((items) => items.map((item) => (item.id === itemId ? toActionItem(updatedItem) : item)));
+      setMessageTone('success');
+      setMessage('담당자를 변경했습니다.');
+    } catch (error) {
+      console.error('[ActionItems][AssigneeUpdateFailed]', {
+        itemId,
+        assigneeId,
+        error,
+      });
+      setActionItems(previousItems);
+      setMessageTone('error');
+      setMessage('담당자 변경에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const handleStatusChange = async (itemId: string, status: ActionItemStatus) => {

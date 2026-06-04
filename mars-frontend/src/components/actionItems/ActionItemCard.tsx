@@ -39,6 +39,9 @@ function ActionItemCard({
   const priority = priorityConfig[item.priority];
   const assignee = users.find((user) => user.id === item.assignee_id);
   const assigneeName = assignee?.name ?? '담당자 미지정';
+  const assigneeControlTitle = canChangeAssignee
+    ? '담당자 변경'
+    : '담당자 변경 API가 아직 없어 변경할 수 없습니다.';
   const deadlineLabel = item.deadline.split('T')[0];
   const deadlineTime = new Date(item.deadline).getTime();
   const tomorrowStart = new Date();
@@ -144,9 +147,10 @@ function ActionItemCard({
 
               <button
                 type="button"
-                aria-haspopup="listbox"
-                aria-expanded={isAssigneeMenuOpen}
+                aria-haspopup={canChangeAssignee ? 'listbox' : undefined}
+                aria-expanded={canChangeAssignee ? isAssigneeMenuOpen : undefined}
                 disabled={!canChangeAssignee}
+                title={assigneeControlTitle}
                 className={[
                   'flex min-w-24 items-center justify-between gap-2 rounded-full border px-3 py-1 text-sm transition',
                   isAssigneeMenuOpen
@@ -161,15 +165,17 @@ function ActionItemCard({
                 }}
               >
                 <span>{assigneeName}</span>
-                <ChevronDown
-                  className={[
-                    'h-4 w-4 text-muted-foreground transition',
-                    isAssigneeMenuOpen ? 'rotate-180' : '',
-                  ].join(' ')}
-                />
+                {canChangeAssignee ? (
+                  <ChevronDown
+                    className={[
+                      'h-4 w-4 text-muted-foreground transition',
+                      isAssigneeMenuOpen ? 'rotate-180' : '',
+                    ].join(' ')}
+                  />
+                ) : null}
               </button>
 
-              {isAssigneeMenuOpen ? (
+              {canChangeAssignee && isAssigneeMenuOpen ? (
                 <div
                   role="listbox"
                   className="absolute left-20 top-9 z-20 w-36 overflow-hidden rounded-lg border border-border bg-card shadow-xl"

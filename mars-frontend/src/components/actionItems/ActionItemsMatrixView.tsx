@@ -72,6 +72,7 @@ function ActionItemsMatrixView({
                   users={users}
                   onAssigneeChange={onAssigneeChange}
                   onDelete={onDelete}
+                  canChangeAssignee
                   canDrag={false}
                   compact
                 />
