@@ -1,6 +1,7 @@
 import { actionItems } from '../actionItems/actionItemsData';
 import { pastMeetings } from '../pastMeetings/pastMeetingsData';
 import type { ActionItemResponse, MeetingResponse } from '../../lib/api';
+import { formatKoreanDate } from '../../lib/date';
 import type { DashboardMeeting, DashboardSummary } from './types';
 
 interface DashboardActionItemLike {
@@ -77,24 +78,10 @@ const buildRemoteMeetingSummaries = (
     return {
       id: meetingId,
       title: meeting?.title ?? meeting?.name ?? meetingActionItems[0]?.description ?? '회의 정보 없음',
-      date: formatDashboardDate(createdAt),
+      date: formatKoreanDate(createdAt),
       items: actionItemCount,
       done: completedCount,
       pct: `${completionRate}%`,
     };
   });
-};
-
-const formatDashboardDate = (value?: string | null) => {
-  if (!value) {
-    return '날짜 없음';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value.slice(0, 10);
-  }
-
-  return date.toISOString().slice(0, 10);
 };

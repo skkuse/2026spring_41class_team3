@@ -3,6 +3,7 @@ import { ArrowRight, Calendar, Lightbulb } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getProposedAgendas } from '../lib/api';
 import type { AgendaResponse } from '../lib/api';
+import { formatKoreanDate } from '../lib/date';
 import { getStoredProjectContext } from '../lib/projectContext';
 
 interface AgendaItem {
@@ -143,7 +144,7 @@ function Suggestions() {
                       </p>
                     ) : null}
                     <p className="mt-2 text-xs text-muted-foreground">
-                      생성일 {formatDate(item.createdAt)}
+                      생성일 {formatKoreanDate(item.createdAt)}
                     </p>
                   </div>
                   <button
@@ -227,20 +228,6 @@ const getAgendaSourceMeetingId = (agenda: AgendaResponse) => {
 
 const toStringValue = (value: unknown) => {
   return typeof value === 'string' ? value : '';
-};
-
-const formatDate = (value?: string | null) => {
-  if (!value) {
-    return '날짜 없음';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value.slice(0, 10);
-  }
-
-  return date.toISOString().slice(0, 10);
 };
 
 export default Suggestions;

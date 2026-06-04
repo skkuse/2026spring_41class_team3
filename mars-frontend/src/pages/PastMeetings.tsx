@@ -4,6 +4,7 @@ import PastMeetingsList from '../components/pastMeetings/PastMeetingsList';
 import type { PastMeeting, PastMeetingDetail } from '../components/pastMeetings/types';
 import { deleteMeeting, getMeeting, getProjectActionItems, getProjectMembers } from '../lib/api';
 import type { ActionItemResponse, MeetingResponse } from '../lib/api';
+import { formatKoreanDate } from '../lib/date';
 import { getStoredProjectContext } from '../lib/projectContext';
 
 function PastMeetings() {
@@ -227,7 +228,7 @@ const buildPastMeetings = (
       return {
         id: meetingId,
         title: meeting?.title ?? meeting?.name ?? '회의 정보 없음',
-        date: formatDate(createdAt),
+        date: formatKoreanDate(createdAt),
         actionItems: meetingActionItems.length,
         completed: meetingActionItems.filter((item) => isCompletedActionItem(item.status)).length,
       };
@@ -272,20 +273,6 @@ const isCompletedActionItem = (status?: string | null) => {
 
 const isNonEmptyString = (value?: string | null): value is string => {
   return typeof value === 'string' && value.length > 0;
-};
-
-const formatDate = (value?: string | null) => {
-  if (!value) {
-    return '날짜 없음';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value.slice(0, 10);
-  }
-
-  return date.toISOString().slice(0, 10);
 };
 
 export default PastMeetings;
