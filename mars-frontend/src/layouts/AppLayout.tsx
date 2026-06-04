@@ -1,6 +1,8 @@
 import { LogOut } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { clearStoredProjectContext, getStoredProjectContext } from '../lib/projectContext';
+import { getProject } from '../lib/api';
+import { clearStoredProjectContext, getStoredProjectContext, setStoredProjectContext } from '../lib/projectContext';
 
 const navItems = [
   {
@@ -35,12 +37,57 @@ function AppLayout() {
   const storedProjectContext = getStoredProjectContext();
   const routeState = location.state as {
     userId?: string;
+    userUuid?: string;
+    projectId?: string;
     title?: string;
     projectCode?: string;
   } | null;
 
   const loginUserId = routeState?.userId ?? storedProjectContext?.userId ?? 'Guest';
-  const currentProjectName = routeState?.title ?? storedProjectContext?.projectTitle ?? '선택된 프로젝트 없음';
+  const projectId = routeState?.projectId ?? storedProjectContext?.projectId ?? '';
+  const userUuid = routeState?.userUuid ?? storedProjectContext?.userUuid ?? '';
+  const projectCode = routeState?.projectCode ?? storedProjectContext?.projectCode ?? '';
+  const fallbackProjectName = routeState?.title ?? storedProjectContext?.projectTitle ?? '선택된 프로젝트 없음';
+  const [resolvedProjectName, setResolvedProjectName] = useState<string | null>(null);
+  const currentProjectName = resolvedProjectName ?? fallbackProjectName;
+
+  useEffect(() => {
+    if (!projectId) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadProjectName = async () => {
+      try {
+        const project = await getProject(projectId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setResolvedProjectName(project.name);
+        setStoredProjectContext({
+          userId: loginUserId,
+          userUuid,
+          projectId: project.id,
+          projectCode: project.project_code || projectCode,
+          projectTitle: project.name,
+        });
+      } catch (error) {
+        console.error('[AppLayout][Project:Failed]', {
+          projectId,
+          error,
+        });
+      }
+    };
+
+    void loadProjectName();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [loginUserId, projectCode, projectId, userUuid]);
 
   const handleLeaveProject = () => {
     clearStoredProjectContext();

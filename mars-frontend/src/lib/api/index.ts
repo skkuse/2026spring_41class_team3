@@ -3,7 +3,7 @@ export { apiRequest } from './httpClient';
 export { createAgenda, getProposedAgendas } from './agendas';
 export { createActionItem, createMeetingActionItems, deleteActionItem, getProjectActionItems, updateActionItemAssignee, updateActionItemPriority, updateActionItemStatus } from './actionItems';
 export { createMeeting, deleteMeeting, getMeeting } from './meetings';
-export { createProject, getProjectMembers, joinProject } from './projects';
+export { createProject, getProject, getProjectMembers, joinProject } from './projects';
 export { checkUserAvailability, createUser, loginUser } from './users';
 export { ApiError } from './types';
 export type { AgendaCreateRequest, AgendaResponse } from './agendas';

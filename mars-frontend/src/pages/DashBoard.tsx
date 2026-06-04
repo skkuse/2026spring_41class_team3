@@ -5,7 +5,7 @@ import { Clock, CheckCircle, Target, Copy, Check } from 'lucide-react';
 import DashboardStatCard from '../components/dashboard/DashboardStatCard';
 import RecentMeetingsPanel from '../components/dashboard/RecentMeetingsPanel';
 import { buildDashboardSummary } from '../components/dashboard/dashboardSummary';
-import { getMeeting, getProjectActionItems } from '../lib/api';
+import { getMeeting, getProject, getProjectActionItems } from '../lib/api';
 import type { ActionItemResponse, MeetingResponse } from '../lib/api';
 import { getStoredProjectContext, setStoredProjectContext } from '../lib/projectContext';
 
@@ -22,10 +22,12 @@ const DashBoard: React.FC = () => {
     } | null;
 
     const projectCode = routeState?.projectCode ?? storedProjectContext?.projectCode ?? '----------';
-    const projectTitle = routeState?.title ?? storedProjectContext?.projectTitle ?? (projectCode !== '----------' ? `프로젝트 ${projectCode}` : 'MARS 메인 프로젝트');
+    const fallbackProjectTitle = routeState?.title ?? storedProjectContext?.projectTitle ?? '선택된 프로젝트 없음';
     const userId = routeState?.userId ?? storedProjectContext?.userId ?? 'Guest';
     const userUuid = routeState?.userUuid ?? storedProjectContext?.userUuid ?? '';
     const projectId = routeState?.projectId ?? storedProjectContext?.projectId ?? '';
+    const [resolvedProjectTitle, setResolvedProjectTitle] = useState<string | null>(null);
+    const projectTitle = resolvedProjectTitle ?? fallbackProjectTitle;
     
     // 복사 상태 관리 State
     const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -48,6 +50,44 @@ const DashBoard: React.FC = () => {
             projectTitle,
         });
     }, [projectCode, projectId, projectTitle, userId, userUuid]);
+
+    useEffect(() => {
+        if (!projectId) {
+            return;
+        }
+
+        let isMounted = true;
+
+        const loadProjectTitle = async () => {
+            try {
+                const project = await getProject(projectId);
+
+                if (!isMounted) {
+                    return;
+                }
+
+                setResolvedProjectTitle(project.name);
+                setStoredProjectContext({
+                    userId,
+                    userUuid,
+                    projectId: project.id,
+                    projectCode: project.project_code || projectCode,
+                    projectTitle: project.name,
+                });
+            } catch (error) {
+                console.error('[Dashboard][Project:Failed]', {
+                    projectId,
+                    error,
+                });
+            }
+        };
+
+        void loadProjectTitle();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [projectCode, projectId, userId, userUuid]);
 
     useEffect(() => {
         if (!projectId) {
