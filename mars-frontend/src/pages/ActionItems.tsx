@@ -168,6 +168,25 @@ function ActionItems() {
     }
   };
 
+  const handlePriorityChange = (itemId: string, priority: ActionItemPriority) => {
+    const levels = priorityLevels[priority];
+
+    setActionItems((items) =>
+      items.map((item) => (
+        item.id === itemId
+          ? {
+              ...item,
+              priority,
+              urgency: levels.urgency,
+              importance: levels.importance,
+            }
+          : item
+      )),
+    );
+    setMessageTone('success');
+    setMessage('우선순위 변경은 화면에만 임시 반영했습니다. API 엔드포인트를 받으면 저장까지 연결합니다.');
+  };
+
   const handleDeleteActionItem = async (itemId: string) => {
     const previousItems = actionItems;
 
@@ -228,6 +247,7 @@ function ActionItems() {
             groupedItems={priorityGroups}
             users={users}
             onAssigneeChange={handleAssigneeChange}
+            onPriorityChange={handlePriorityChange}
             onDelete={handleDeleteActionItem}
           />
         )}
