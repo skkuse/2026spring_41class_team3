@@ -28,4 +28,3 @@ class Meeting(Base):
     action_items = relationship("ActionItem", back_populates="meeting", cascade="all, delete")
     summary = relationship("MeetingSummary", back_populates="meeting", uselist=False, cascade="all, delete")
     productivity = relationship("MeetingProductivity", back_populates="meeting", uselist=False, cascade="all, delete")
-    agendas = relationship("Agenda", back_populates="meeting", cascade="all, delete")
