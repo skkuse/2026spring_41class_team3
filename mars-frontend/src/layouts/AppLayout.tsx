@@ -2,6 +2,7 @@ import { LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { getProject } from '../lib/api';
+import { clearStoredUserIdentity } from '../lib/authCookie';
 import { clearStoredProjectContext, getStoredProjectContext, setStoredProjectContext } from '../lib/projectContext';
 
 const navItems = [
@@ -91,6 +92,7 @@ function AppLayout() {
 
   const handleLeaveProject = () => {
     clearStoredProjectContext();
+    clearStoredUserIdentity();
     navigate('/');
   };
 
