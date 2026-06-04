@@ -3,7 +3,7 @@ import ActionItemsHeader from '../components/actionItems/ActionItemsHeader';
 import ActionItemsListView from '../components/actionItems/ActionItemsListView';
 import ActionItemsMatrixView from '../components/actionItems/ActionItemsMatrixView';
 import { groupActionItems } from '../components/actionItems/groupActionItems';
-import { deleteActionItem, getProjectActionItems, getProjectMembers, updateActionItemAssignee, updateActionItemStatus } from '../lib/api';
+import { deleteActionItem, getProjectActionItems, getProjectMembers, updateActionItemAssignee, updateActionItemPriority, updateActionItemStatus } from '../lib/api';
 import type { ActionItemResponse } from '../lib/api';
 import { getStoredProjectContext } from '../lib/projectContext';
 import type {
@@ -173,7 +173,8 @@ function ActionItems() {
     }
   };
 
-  const handlePriorityChange = (itemId: string, priority: ActionItemPriority) => {
+  const handlePriorityChange = async (itemId: string, priority: ActionItemPriority) => {
+    const previousItems = actionItems;
     const levels = priorityLevels[priority];
 
     setActionItems((items) =>
@@ -188,8 +189,22 @@ function ActionItems() {
           : item
       )),
     );
-    setMessageTone('success');
-    setMessage('우선순위 변경은 화면에만 임시 반영했습니다. API 엔드포인트를 받으면 저장까지 연결합니다.');
+    setMessage('');
+
+    try {
+      await updateActionItemPriority(itemId, toApiPriorityPayload(priority));
+      setMessageTone('success');
+      setMessage('우선순위를 변경했습니다.');
+    } catch (error) {
+      console.error('[ActionItems][PriorityUpdateFailed]', {
+        itemId,
+        priority,
+        error,
+      });
+      setActionItems(previousItems);
+      setMessageTone('error');
+      setMessage('우선순위 변경에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const handleDeleteActionItem = async (itemId: string) => {
@@ -393,6 +408,22 @@ const toActionItemPriority = (
   importance?: number | null,
   urgency?: number | null,
 ): ActionItemPriority => {
+  if (importance !== null && importance !== undefined && urgency !== null && urgency !== undefined) {
+    if (importance >= 2 && urgency >= 2) {
+      return 'DO';
+    }
+
+    if (importance >= 2) {
+      return 'SCHEDULE';
+    }
+
+    if (urgency >= 2) {
+      return 'DELEGATE';
+    }
+
+    return 'DELETE';
+  }
+
   if (priority !== null && priority !== undefined) {
     if (priority >= 3) {
       return 'DO';
@@ -416,6 +447,38 @@ const toActionItemPriority = (
   }
 
   return 'DELETE';
+};
+
+const toApiPriorityPayload = (priority: ActionItemPriority) => {
+  if (priority === 'DO') {
+    return {
+      priority: 3,
+      importance: 2,
+      urgency: 2,
+    };
+  }
+
+  if (priority === 'SCHEDULE') {
+    return {
+      priority: 2,
+      importance: 2,
+      urgency: 1,
+    };
+  }
+
+  if (priority === 'DELEGATE') {
+    return {
+      priority: 2,
+      importance: 1,
+      urgency: 2,
+    };
+  }
+
+  return {
+    priority: 1,
+    importance: 1,
+    urgency: 1,
+  };
 };
 
 export default ActionItems;
