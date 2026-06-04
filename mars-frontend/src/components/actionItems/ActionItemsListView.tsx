@@ -9,6 +9,7 @@ interface ActionItemsListViewProps {
   onAssigneeChange: (itemId: string, assigneeId: string) => void;
   onStatusChange: (itemId: string, status: ActionItemStatus) => void;
   onDelete: (itemId: string) => void;
+  deletingItemIds?: string[];
 }
 
 function ActionItemsListView({
@@ -17,6 +18,7 @@ function ActionItemsListView({
   onAssigneeChange,
   onStatusChange,
   onDelete,
+  deletingItemIds = [],
 }: ActionItemsListViewProps) {
   const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
   const [activeDropStatus, setActiveDropStatus] =
@@ -93,6 +95,7 @@ function ActionItemsListView({
                     users={users}
                     onAssigneeChange={onAssigneeChange}
                     onDelete={onDelete}
+                    isDeleting={deletingItemIds.includes(item.id)}
                     canChangeAssignee
                     onDragStart={setDraggingItemId}
                     onDragEnd={() => {

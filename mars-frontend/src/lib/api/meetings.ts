@@ -32,3 +32,9 @@ export const getMeeting = (projectId: string, meetingId: string) => {
     `/projects/${encodeURIComponent(projectId)}/meetings/${encodeURIComponent(meetingId)}`,
   );
 };
+
+export const deleteMeeting = (meetingId: string) => {
+  return apiRequest<unknown>(`/meetings/${encodeURIComponent(meetingId)}`, {
+    method: 'DELETE',
+  });
+};

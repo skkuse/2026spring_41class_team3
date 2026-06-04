@@ -9,6 +9,8 @@ interface ActionItemsHeaderProps {
   currentUserId: string;
   showAllItems: boolean;
   onShowAllItemsChange: (showAllItems: boolean) => void;
+  totalCount: number;
+  completedCount: number;
 }
 
 function ActionItemsHeader({
@@ -18,6 +20,8 @@ function ActionItemsHeader({
   currentUserId,
   showAllItems,
   onShowAllItemsChange,
+  totalCount,
+  completedCount,
 }: ActionItemsHeaderProps) {
   const currentUser = users.find((user) => user.id === currentUserId);
 
@@ -28,6 +32,16 @@ function ActionItemsHeader({
         <p className="mt-1 text-sm text-muted-foreground">
           작업 관리 및 추적
         </p>
+        <div className="mt-4 grid w-full max-w-sm grid-cols-2 gap-3">
+          <div className="rounded-lg border border-border bg-secondary px-4 py-3">
+            <p className="text-xs text-muted-foreground">추출된 액션 아이템</p>
+            <strong className="mt-1 block text-2xl text-foreground">{totalCount}</strong>
+          </div>
+          <div className="rounded-lg border border-border bg-secondary px-4 py-3">
+            <p className="text-xs text-muted-foreground">완료</p>
+            <strong className="mt-1 block text-2xl text-emerald-500">{completedCount}</strong>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:items-end">

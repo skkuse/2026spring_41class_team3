@@ -15,6 +15,7 @@ interface ActionItemCardProps {
   users: User[];
   onAssigneeChange: (itemId: string, assigneeId: string) => void;
   onDelete: (itemId: string) => void;
+  isDeleting?: boolean;
   canChangeAssignee?: boolean;
   onDragStart?: (itemId: string) => void;
   onDragEnd?: () => void;
@@ -28,6 +29,7 @@ function ActionItemCard({
   users,
   onAssigneeChange,
   onDelete,
+  isDeleting = false,
   canChangeAssignee = false,
   onDragStart,
   onDragEnd,
@@ -103,8 +105,9 @@ function ActionItemCard({
               />
               <button
                 type="button"
-                aria-label="액션 아이템 삭제"
-                className="rounded-md p-1 text-muted-foreground opacity-0 transition hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                aria-label={isDeleting ? '액션 아이템 삭제 중' : '액션 아이템 삭제'}
+                disabled={isDeleting}
+                className="rounded-md border border-border bg-secondary p-1 text-muted-foreground transition hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={(event) => {
                   event.stopPropagation();
                   setIsDeleteConfirmOpen((open) => !open);
@@ -120,16 +123,18 @@ function ActionItemCard({
                     <button
                       type="button"
                       className="rounded-md px-2 py-1 text-xs text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                      disabled={isDeleting}
                       onClick={() => setIsDeleteConfirmOpen(false)}
                     >
                       취소
                     </button>
                     <button
                       type="button"
-                      className="rounded-md bg-destructive px-2 py-1 text-xs text-destructive-foreground transition hover:opacity-90"
+                      className="rounded-md bg-destructive px-2 py-1 text-xs text-destructive-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={isDeleting}
                       onClick={() => onDelete(item.id)}
                     >
-                      삭제
+                      {isDeleting ? '삭제 중' : '삭제'}
                     </button>
                   </div>
                 </div>

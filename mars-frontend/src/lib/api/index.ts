@@ -1,7 +1,7 @@
 export { API_BASE_URL, API_REQUEST_TIMEOUT_MS } from './config';
 export { apiRequest } from './httpClient';
 export { createActionItem, createMeetingActionItems, deleteActionItem, getProjectActionItems, updateActionItemAssignee, updateActionItemStatus } from './actionItems';
-export { createMeeting, getMeeting } from './meetings';
+export { createMeeting, deleteMeeting, getMeeting } from './meetings';
 export { createProject, getProjectMembers, joinProject } from './projects';
 export { checkUserAvailability, createUser, loginUser } from './users';
 export { ApiError } from './types';

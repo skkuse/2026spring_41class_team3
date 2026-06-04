@@ -38,6 +38,8 @@ export const pastMeetingDetails: Record<string, PastMeetingDetail> = {
       '회의 목적과 산출물이 명확했고, 핵심 화면 범위를 빠르게 합의했습니다. 다만 백엔드 API 응답 형식과 프론트 상태 모델을 더 일찍 맞추면 이후 구현 속도가 더 좋아질 수 있습니다.',
     productivity_score: 86,
     created_at: '2026-05-17T06:41:52.829Z',
+    actionItems: 5,
+    completed: 5,
   },
   '3fa85f64-5717-4562-b3fc-2c963f66afa2': {
     id: '3fa85f64-5717-4562-b3fc-2c963f66afa2',
@@ -52,6 +54,8 @@ export const pastMeetingDetails: Record<string, PastMeetingDetail> = {
       '발표 흐름은 잘 정리되었지만 각 슬라이드의 메시지 밀도가 조금 높습니다. 핵심 문장을 줄이고 화면 시연에 시간을 더 배분하면 설득력이 높아질 것입니다.',
     productivity_score: 78,
     created_at: '2026-05-17T06:41:52.829Z',
+    actionItems: 10,
+    completed: 10,
   },
   '3fa85f64-5717-4562-b3fc-2c963f66afa3': {
     id: '3fa85f64-5717-4562-b3fc-2c963f66afa3',
@@ -66,5 +70,7 @@ export const pastMeetingDetails: Record<string, PastMeetingDetail> = {
       '담당자와 마감일이 구체적으로 정리되어 실행 가능성이 높습니다. 다음 회의에서는 완료 기준과 테스트 범위를 더 구체화하면 좋습니다.',
     productivity_score: 91,
     created_at: '2026-05-17T06:41:52.829Z',
+    actionItems: 6,
+    completed: 6,
   },
 };

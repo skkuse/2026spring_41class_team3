@@ -31,6 +31,7 @@ function ActionItems() {
   const [users, setUsers] = useState<User[]>([]);
   const [showAllItems, setShowAllItems] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [deletingItemIds, setDeletingItemIds] = useState<string[]>([]);
   const [message, setMessage] = useState('');
   const [messageTone, setMessageTone] = useState<'success' | 'error'>('success');
   const storedProjectContext = getStoredProjectContext();
@@ -123,6 +124,10 @@ function ActionItems() {
     () => groupActionItems<ActionItemPriority>(visibleActionItems, 'priority'),
     [visibleActionItems],
   );
+  const completedActionItemCount = useMemo(
+    () => visibleActionItems.filter((item) => item.status === 'DONE').length,
+    [visibleActionItems],
+  );
 
   const handleAssigneeChange = async (itemId: string, assigneeId: string) => {
     const previousItems = actionItems;
@@ -190,11 +195,18 @@ function ActionItems() {
   const handleDeleteActionItem = async (itemId: string) => {
     const previousItems = actionItems;
 
+    if (deletingItemIds.includes(itemId)) {
+      return;
+    }
+
+    setDeletingItemIds((itemIds) => [...itemIds, itemId]);
     setActionItems((items) => items.filter((item) => item.id !== itemId));
     setMessage('');
 
     try {
       await deleteActionItem(itemId);
+      setMessageTone('success');
+      setMessage('액션 아이템을 삭제했습니다.');
     } catch (error) {
       console.error('[ActionItems][DeleteFailed]', {
         itemId,
@@ -203,6 +215,8 @@ function ActionItems() {
       setActionItems(previousItems);
       setMessageTone('error');
       setMessage('액션 아이템 삭제에 실패했습니다.');
+    } finally {
+      setDeletingItemIds((itemIds) => itemIds.filter((id) => id !== itemId));
     }
   };
 
@@ -216,6 +230,8 @@ function ActionItems() {
           currentUserId={currentUserId}
           showAllItems={showAllItems}
           onShowAllItemsChange={setShowAllItems}
+          totalCount={visibleActionItems.length}
+          completedCount={completedActionItemCount}
         />
 
         {(message || projectContextErrorMessage) && (
@@ -241,6 +257,7 @@ function ActionItems() {
             onAssigneeChange={handleAssigneeChange}
             onStatusChange={handleStatusChange}
             onDelete={handleDeleteActionItem}
+            deletingItemIds={deletingItemIds}
           />
         ) : (
           <ActionItemsMatrixView
@@ -249,6 +266,7 @@ function ActionItems() {
             onAssigneeChange={handleAssigneeChange}
             onPriorityChange={handlePriorityChange}
             onDelete={handleDeleteActionItem}
+            deletingItemIds={deletingItemIds}
           />
         )}
       </div>
