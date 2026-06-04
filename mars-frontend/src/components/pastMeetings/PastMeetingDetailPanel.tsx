@@ -5,7 +5,8 @@ interface PastMeetingDetailPanelProps {
 }
 
 function PastMeetingDetailPanel({ detail }: PastMeetingDetailPanelProps) {
-  const score = Math.max(0, Math.min(100, detail.productivity_score));
+  const score = toProductivityPercent(detail.productivity_score);
+  const scoreLabel = score.toFixed(1);
 
   return (
     <section className="mt-4 rounded-lg border border-border bg-secondary p-5">
@@ -31,8 +32,9 @@ function PastMeetingDetailPanel({ detail }: PastMeetingDetailPanelProps) {
             </div>
           </div>
           <div className="mt-4 flex items-end gap-2">
-            <span className="text-3xl font-semibold text-primary">{score}</span>
-            <span className="pb-1 text-sm text-muted-foreground">/ 100 생산성</span>
+          <span className="pb-1 text-sm text-muted-foreground">생산성 점수     </span>
+            <span className="text-3xl font-semibold text-primary">{scoreLabel}</span>
+            <span className="pb-1 text-sm text-muted-foreground">/ 100</span>
           </div>
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
             <div
@@ -61,5 +63,11 @@ function PastMeetingDetailPanel({ detail }: PastMeetingDetailPanelProps) {
     </section>
   );
 }
+
+const toProductivityPercent = (score: number) => {
+  const percentScore = score <= 1 ? score * 100 : score;
+
+  return Math.max(0, Math.min(100, percentScore));
+};
 
 export default PastMeetingDetailPanel;
