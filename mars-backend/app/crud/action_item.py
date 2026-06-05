@@ -6,9 +6,10 @@ from typing import Optional
 import uuid
 
 def create_action_item(db: Session, item: ActionItemCreate) -> ActionItem:
-    target_user = db.query(User).filter(User.id == item.assignee_id).first()
-    if not target_user:
-        raise HTTPException(status_code=404, detail="해당 유저(담당자)를 찾을 수 없습니다.")
+    if item.assignee_id is not None:
+        target_user = db.query(User).filter(User.id == item.assignee_id).first()
+        if not target_user:
+            raise HTTPException(status_code=404, detail="해당 유저(담당자)를 찾을 수 없습니다.")
     db_item = ActionItem(
         assignee_id=item.assignee_id,
         meeting_id=item.meeting_id,
