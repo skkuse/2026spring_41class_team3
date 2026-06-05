@@ -8,7 +8,7 @@ export interface ProjectNavigationState {
   projectId: string;
   projectCode: string;
   title: string;
-  role: 'admin';
+  role?: 'admin' | 'member';
 }
 
 export interface UserIdentity {
