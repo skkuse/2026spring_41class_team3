@@ -33,7 +33,6 @@ function MeetingInputPanel() {
   const [createdMeeting, setCreatedMeeting] = useState<MeetingResponse | null>(null);
   const [extractedItems, setExtractedItems] = useState<ExtractedActionItemDraft[]>([]);
   const [assigneeOptions, setAssigneeOptions] = useState<User[]>([]);
-  const firstAssigneeId = assigneeOptions[0]?.id ?? '';
   const isMeetingCreated = Boolean(createdMeeting?.id);
   const isBusy = isCreatingMeeting || isExtractingActionItems || isConfirmingActionItems;
   const pipelineSteps = [
@@ -161,9 +160,8 @@ function MeetingInputPanel() {
         projectId,
         meetingId,
         requestedAt,
-        assigneeId: firstAssigneeId,
       });
-      const draftItems = extractedActionItems.map((item) => toActionItemDraft(item, firstAssigneeId, assigneeOptions));
+      const draftItems = extractedActionItems.map((item) => toActionItemDraft(item, '', assigneeOptions));
 
       setMessageTone('success');
       setMessage(draftItems.length > 0
@@ -218,7 +216,7 @@ function MeetingInputPanel() {
       {
         id: `draft-${Date.now()}`,
         description: '',
-        assignee_id: firstAssigneeId,
+        assignee_id: '',
         status: 'TODO',
         priority: 'DO',
         deadline: getFutureDate(7),
@@ -247,11 +245,11 @@ function MeetingInputPanel() {
       return;
     }
 
-    const invalidItem = extractedItems.find((item) => !item.description.trim() || !item.assignee_id);
+    const invalidItem = extractedItems.find((item) => !item.description.trim());
 
     if (invalidItem) {
       setMessageTone('error');
-      setMessage('모든 액션 아이템의 세부 내용과 담당자를 입력해 주세요.');
+      setMessage('모든 액션 아이템의 세부 내용을 입력해 주세요.');
       return;
     }
 
@@ -432,7 +430,7 @@ const toActionItemCreateRequest = (
   const priorityLevels = getPriorityLevels(item.priority);
 
   return {
-    assignee_id: item.assignee_id,
+    assignee_id: item.assignee_id || null,
     meeting_id: meetingId,
     description: item.description.trim(),
     status: item.status,

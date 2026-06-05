@@ -142,7 +142,7 @@ function ActionItems() {
     setMessage('');
 
     try {
-      const updatedItem = await updateActionItemAssignee(itemId, { assignee_id: assigneeId });
+      const updatedItem = await updateActionItemAssignee(itemId, { assignee_id: assigneeId || null });
       setActionItems((items) => items.map((item) => (item.id === itemId ? toActionItem(updatedItem) : item)));
     } catch (error) {
       console.error('[ActionItems][AssigneeUpdateFailed]', {

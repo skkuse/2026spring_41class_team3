@@ -41,7 +41,8 @@ function ActionItemCard({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const priority = priorityConfig[item.priority];
   const assignee = users.find((user) => user.id === item.assignee_id);
-  const assigneeName = assignee?.name ?? '담당자 미지정';
+  const assigneeName = assignee?.name ?? '-';
+  const assigneeInitial = assignee ? assignee.name.slice(1, 3) : '-';
   const assigneeControlTitle = canChangeAssignee
     ? '담당자 변경'
     : '담당자 변경 API가 아직 없어 변경할 수 없습니다.';
@@ -145,7 +146,7 @@ function ActionItemCard({
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
             <div className="relative flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/20 text-xs text-primary">
-                {assigneeName.slice(1, 3)}
+                {assigneeInitial}
               </span>
 
               <span className="text-muted-foreground">담당자</span>
@@ -185,6 +186,24 @@ function ActionItemCard({
                   role="listbox"
                   className="absolute left-20 top-9 z-20 w-36 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
                 >
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={!item.assignee_id}
+                    className={[
+                      'flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition',
+                      !item.assignee_id
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    ].join(' ')}
+                    onClick={() => {
+                      onAssigneeChange(item.id, '');
+                      setIsAssigneeMenuOpen(false);
+                    }}
+                  >
+                    <span>-</span>
+                    {!item.assignee_id ? <Check className="h-4 w-4" /> : null}
+                  </button>
                   {users.map((user) => {
                     const isSelected = user.id === item.assignee_id;
 

@@ -28,7 +28,7 @@ export interface MeetingAnalyzeResponse {
 }
 
 export interface ActionItemCreateRequest {
-  assignee_id: string;
+  assignee_id: string | null;
   meeting_id: string;
   description: string;
   status?: string;
@@ -43,7 +43,7 @@ export interface ActionItemStatusUpdateRequest {
 }
 
 export interface ActionItemAssigneeUpdateRequest {
-  assignee_id: string;
+  assignee_id: string | null;
 }
 
 export interface ActionItemPriorityUpdateRequest {
