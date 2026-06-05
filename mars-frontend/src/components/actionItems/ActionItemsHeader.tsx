@@ -9,6 +9,8 @@ interface ActionItemsHeaderProps {
   currentUserId: string;
   showMyItems: boolean;
   onShowMyItemsChange: (showMyItems: boolean) => void;
+  showUnassignedItems: boolean;
+  onShowUnassignedItemsChange: (showUnassignedItems: boolean) => void;
   totalCount: number;
   completedCount: number;
 }
@@ -19,6 +21,8 @@ function ActionItemsHeader({
   currentUserId,
   showMyItems,
   onShowMyItemsChange,
+  showUnassignedItems,
+  onShowUnassignedItemsChange,
   totalCount,
   completedCount,
 }: ActionItemsHeaderProps) {
@@ -56,16 +60,32 @@ function ActionItemsHeader({
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={showMyItems}
-              disabled={!canFilterByCurrentUser}
-              onChange={(event) => onShowMyItemsChange(event.target.checked)}
-              className="h-4 w-4 accent-primary disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            나의 할일만 보기
-          </label>
+          <div className="flex flex-col gap-1.5 text-muted-foreground sm:flex-row sm:items-center sm:gap-2.5">
+            <label className="flex items-center gap-1.5 whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={showMyItems}
+                disabled={!canFilterByCurrentUser}
+                onChange={(event) => onShowMyItemsChange(event.target.checked)}
+                className="h-3 w-3 accent-primary disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <span className="text-sm font-normal leading-none">
+                나의 할일만 보기
+              </span>
+            </label>
+
+            <label className="flex items-center gap-1.5 whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={showUnassignedItems}
+                onChange={(event) => onShowUnassignedItemsChange(event.target.checked)}
+                className="h-3 w-3 accent-primary"
+              />
+              <span className="text-sm font-normal leading-none">
+                담당자 미지정만 보기
+              </span>
+            </label>
+          </div>
 
           <div className="grid grid-cols-2 rounded-lg border border-border bg-secondary p-1">
             <button

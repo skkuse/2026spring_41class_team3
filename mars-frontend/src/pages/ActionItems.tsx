@@ -30,6 +30,7 @@ function ActionItems() {
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [showMyItems, setShowMyItems] = useState(false);
+  const [showUnassignedItems, setShowUnassignedItems] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [deletingItemIds, setDeletingItemIds] = useState<string[]>([]);
   const [actionItemOrderIds, setActionItemOrderIds] = useState<string[]>([]);
@@ -45,6 +46,7 @@ function ActionItems() {
   const actionItemOrderStorageKey = projectId && currentUserId
     ? `mars:action-item-order:${projectId}:${currentUserId}`
     : '';
+  const shouldLoadMine = showMyItems;
 
   useEffect(() => {
     if (!projectId || !currentUserId) {
@@ -63,7 +65,7 @@ function ActionItems() {
       const projectActionItemsResult = await loadProjectActionItems({
         projectId,
         currentUserId,
-        shouldLoadMine: showMyItems,
+        shouldLoadMine,
       })
         .then((projectActionItems) => ({ status: 'fulfilled' as const, value: projectActionItems }))
         .catch((error: unknown) => ({ status: 'rejected' as const, reason: error }));
@@ -107,11 +109,18 @@ function ActionItems() {
     return () => {
       isMounted = false;
     };
-  }, [actionItemOrderStorageKey, currentUserId, projectId, showMyItems]);
+  }, [actionItemOrderStorageKey, currentUserId, projectId, shouldLoadMine]);
+
+  const filteredActionItems = useMemo(
+    () => showUnassignedItems
+      ? actionItems.filter((item) => !item.assignee_id)
+      : actionItems,
+    [actionItems, showUnassignedItems],
+  );
 
   const visibleActionItems = useMemo(
-    () => sortActionItemsByOrder(actionItems, actionItemOrderIds),
-    [actionItems, actionItemOrderIds],
+    () => sortActionItemsByOrder(filteredActionItems, actionItemOrderIds),
+    [filteredActionItems, actionItemOrderIds],
   );
 
   const statusGroups = useMemo(
@@ -308,7 +317,21 @@ function ActionItems() {
           onViewModeChange={setViewMode}
           currentUserId={currentUserId}
           showMyItems={showMyItems}
-          onShowMyItemsChange={setShowMyItems}
+          onShowMyItemsChange={(checked) => {
+            setShowMyItems(checked);
+
+            if (checked) {
+              setShowUnassignedItems(false);
+            }
+          }}
+          showUnassignedItems={showUnassignedItems}
+          onShowUnassignedItemsChange={(checked) => {
+            setShowUnassignedItems(checked);
+
+            if (checked) {
+              setShowMyItems(false);
+            }
+          }}
           totalCount={visibleActionItems.length}
           completedCount={completedActionItemCount}
         />
