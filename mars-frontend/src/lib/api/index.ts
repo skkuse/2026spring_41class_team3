@@ -1,11 +1,13 @@
 export { API_BASE_URL, API_REQUEST_TIMEOUT_MS } from './config';
 export { apiRequest } from './httpClient';
-export { createActionItem, createMeetingActionItems, deleteActionItem, getProjectActionItems, updateActionItemAssignee, updateActionItemStatus } from './actionItems';
+export { createAgenda, getProposedAgendas } from './agendas';
+export { createActionItem, createMeetingActionItems, deleteActionItem, getProjectActionItems, updateActionItemAssignee, updateActionItemPriority, updateActionItemStatus } from './actionItems';
 export { createMeeting, deleteMeeting, getMeeting } from './meetings';
-export { createProject, getProjectMembers, joinProject } from './projects';
+export { createProject, getProject, getProjectMembers, joinProject } from './projects';
 export { checkUserAvailability, createUser, loginUser } from './users';
 export { ApiError } from './types';
-export type { ActionItemAssigneeUpdateRequest, ActionItemCreateRequest, ActionItemResponse, ActionItemStatusUpdateRequest, GetProjectActionItemsParams, MeetingAnalyzeActionItem, MeetingAnalyzeResponse } from './actionItems';
+export type { AgendaCreateRequest, AgendaResponse } from './agendas';
+export type { ActionItemAssigneeUpdateRequest, ActionItemCreateRequest, ActionItemPriorityUpdateRequest, ActionItemResponse, ActionItemStatusUpdateRequest, GetProjectActionItemsParams, MeetingAnalyzeActionItem, MeetingAnalyzeResponse } from './actionItems';
 export type { CreateProjectRequest, JoinProjectRequest, JoinProjectResponse, ProjectMemberResponse, ProjectResponse } from './projects';
 export type { MeetingCreateRequest, MeetingResponse } from './meetings';
 export type { CreateUserRequest, UserAvailabilityResponse, UserResponse } from './users';

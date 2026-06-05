@@ -1,4 +1,5 @@
 import { LayoutGrid, ListChecks } from 'lucide-react';
+import { typography } from '../../lib/typography';
 import { priorityLegend } from './actionItemConfig';
 import type { ActionItemsViewMode, User } from './types';
 
@@ -28,18 +29,18 @@ function ActionItemsHeader({
   return (
     <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
       <div>
-        <h1 className="text-3xl text-primary">액션 아이템</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className={typography.pageTitle}>액션 아이템</h1>
+        <p className={`mt-1 ${typography.pageDescription}`}>
           작업 관리 및 추적
         </p>
         <div className="mt-4 grid w-full max-w-sm grid-cols-2 gap-3">
           <div className="rounded-lg border border-border bg-secondary px-4 py-3">
-            <p className="text-xs text-muted-foreground">추출된 액션 아이템</p>
-            <strong className="mt-1 block text-2xl text-foreground">{totalCount}</strong>
+            <p className={typography.meta}>추출된 액션 아이템</p>
+            <strong className={`mt-1 block ${typography.statValue}`}>{totalCount}</strong>
           </div>
           <div className="rounded-lg border border-border bg-secondary px-4 py-3">
-            <p className="text-xs text-muted-foreground">완료</p>
-            <strong className="mt-1 block text-2xl text-emerald-500">{completedCount}</strong>
+            <p className={typography.meta}>완료</p>
+            <strong className="mt-1 block text-xl text-emerald-500">{completedCount}</strong>
           </div>
         </div>
       </div>

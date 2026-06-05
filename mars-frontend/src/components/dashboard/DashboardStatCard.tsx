@@ -5,6 +5,7 @@ interface DashboardStatCardProps {
   value: string | number;
   label: string;
   badge: string;
+  isLoading?: boolean;
   variant: 'primary' | 'success';
   onClick: () => void;
 }
@@ -31,6 +32,7 @@ function DashboardStatCard({
   value,
   label,
   badge,
+  isLoading = false,
   variant,
   onClick,
 }: DashboardStatCardProps) {
@@ -51,7 +53,13 @@ function DashboardStatCard({
         </span>
       </div>
       <div className="mt-4">
-        <h3 className={`text-3xl font-bold tracking-tight text-foreground transition-all ${styles.value}`}>
+        <h3 className={[
+          'font-bold tracking-tight transition-all',
+          isLoading
+            ? 'text-xs text-muted-foreground/70'
+            : `text-3xl text-foreground ${styles.value}`,
+        ].join(' ')}
+        >
           {value}
         </h3>
         <p className="text-xs text-muted-foreground mt-1">{label}</p>

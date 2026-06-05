@@ -40,6 +40,7 @@ export const pastMeetingDetails: Record<string, PastMeetingDetail> = {
     created_at: '2026-05-17T06:41:52.829Z',
     actionItems: 5,
     completed: 5,
+    next_agenda: ['액션 아이템 관리 화면 구현 범위 점검'],
   },
   '3fa85f64-5717-4562-b3fc-2c963f66afa2': {
     id: '3fa85f64-5717-4562-b3fc-2c963f66afa2',
@@ -56,6 +57,7 @@ export const pastMeetingDetails: Record<string, PastMeetingDetail> = {
     created_at: '2026-05-17T06:41:52.829Z',
     actionItems: 10,
     completed: 10,
+    next_agenda: ['발표 자료 시연 흐름 최종 확인'],
   },
   '3fa85f64-5717-4562-b3fc-2c963f66afa3': {
     id: '3fa85f64-5717-4562-b3fc-2c963f66afa3',
@@ -72,5 +74,6 @@ export const pastMeetingDetails: Record<string, PastMeetingDetail> = {
     created_at: '2026-05-17T06:41:52.829Z',
     actionItems: 6,
     completed: 6,
+    next_agenda: ['남은 구현 범위와 테스트 계획 공유'],
   },
 };

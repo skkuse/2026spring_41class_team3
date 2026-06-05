@@ -1,20 +1,28 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import PastMeetingsList from '../components/pastMeetings/PastMeetingsList';
 import type { PastMeeting, PastMeetingDetail } from '../components/pastMeetings/types';
 import { deleteMeeting, getMeeting, getProjectActionItems, getProjectMembers } from '../lib/api';
 import type { ActionItemResponse, MeetingResponse } from '../lib/api';
+import { formatKoreanDate } from '../lib/date';
 import { getStoredProjectContext } from '../lib/projectContext';
+import { typography } from '../lib/typography';
 
 function PastMeetings() {
-  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+  const location = useLocation();
+  const routeState = location.state as { selectedMeetingId?: unknown } | null;
+  const initialSelectedMeetingId = typeof routeState?.selectedMeetingId === 'string'
+    ? routeState.selectedMeetingId
+    : null;
+  const storedProjectContext = getStoredProjectContext();
+  const projectId = storedProjectContext?.projectId ?? '';
+  const currentUserId = storedProjectContext?.userUuid ?? '';
+  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(initialSelectedMeetingId);
   const [meetings, setMeetings] = useState<PastMeeting[]>([]);
   const [meetingDetails, setMeetingDetails] = useState<Record<string, PastMeetingDetail>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageTone, setMessageTone] = useState<'success' | 'error'>('success');
-  const storedProjectContext = getStoredProjectContext();
-  const projectId = storedProjectContext?.projectId ?? '';
-  const currentUserId = storedProjectContext?.userUuid ?? '';
   const projectContextErrorMessage = !projectId
     ? '프로젝트 정보를 확인할 수 없습니다. 프로젝트에 다시 접속해 주세요.'
     : !currentUserId
@@ -148,8 +156,8 @@ function PastMeetings() {
     <main className="min-h-full bg-background px-6 py-8 text-foreground md:px-10">
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header>
-          <h1 className="text-3xl text-primary">지난 회의</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className={typography.pageTitle}>지난 회의</h1>
+          <p className={`mt-1 ${typography.pageDescription}`}>
             이전 회의의 내용과 추출된 액션 아이템 진행 현황을 확인하세요.
           </p>
         </header>
@@ -221,7 +229,7 @@ const buildPastMeetings = (
       return {
         id: meetingId,
         title: meeting?.title ?? meeting?.name ?? '회의 정보 없음',
-        date: formatDate(createdAt),
+        date: formatKoreanDate(createdAt),
         actionItems: meetingActionItems.length,
         completed: meetingActionItems.filter((item) => isCompletedActionItem(item.status)).length,
       };
@@ -251,6 +259,7 @@ const buildPastMeetingDetails = (
           created_at: detail?.created_at ?? meeting.date,
           actionItems: meeting.actionItems,
           completed: meeting.completed,
+          next_agenda: detail?.next_agenda ?? detail?.proposed_agendas ?? [],
         },
       ];
     }),
@@ -265,20 +274,6 @@ const isCompletedActionItem = (status?: string | null) => {
 
 const isNonEmptyString = (value?: string | null): value is string => {
   return typeof value === 'string' && value.length > 0;
-};
-
-const formatDate = (value?: string | null) => {
-  if (!value) {
-    return '날짜 없음';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value.slice(0, 10);
-  }
-
-  return date.toISOString().slice(0, 10);
 };
 
 export default PastMeetings;

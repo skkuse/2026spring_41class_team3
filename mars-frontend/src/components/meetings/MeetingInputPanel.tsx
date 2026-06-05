@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { User } from '../actionItems/types';
 import ExtractedActionItemsEditor from './ExtractedActionItemsEditor';
 import {
@@ -19,9 +19,11 @@ const placeholder = `이곳에 입력해주세요.`;
 
 function MeetingInputPanel() {
   const navigate = useNavigate();
-  const [title, setTitle] = useState('');
-  const [purpose, setPurpose] = useState('');
-  const [rawText, setRawText] = useState('');
+  const location = useLocation();
+  const meetingDraft = getMeetingDraftFromLocationState(location.state);
+  const [title, setTitle] = useState(meetingDraft.title);
+  const [purpose, setPurpose] = useState(meetingDraft.purpose);
+  const [rawText, setRawText] = useState(meetingDraft.rawText);
   const [isCreatingMeeting, setIsCreatingMeeting] = useState(false);
   const [isExtractingActionItems, setIsExtractingActionItems] = useState(false);
   const [isConfirmingActionItems, setIsConfirmingActionItems] = useState(false);
@@ -482,6 +484,36 @@ const toDeadlineISOString = (deadline: string) => {
   }
 
   return parsedDeadline.toISOString();
+};
+
+const getMeetingDraftFromLocationState = (state: unknown) => {
+  const emptyDraft = {
+    title: '',
+    purpose: '',
+    rawText: '',
+  };
+
+  if (!state || typeof state !== 'object') {
+    return emptyDraft;
+  }
+
+  const meetingDraft = (state as { meetingDraft?: unknown }).meetingDraft;
+
+  if (!meetingDraft || typeof meetingDraft !== 'object') {
+    return emptyDraft;
+  }
+
+  const draftRecord = meetingDraft as Record<string, unknown>;
+
+  return {
+    title: toStringDraftValue(draftRecord.title),
+    purpose: toStringDraftValue(draftRecord.purpose),
+    rawText: toStringDraftValue(draftRecord.rawText),
+  };
+};
+
+const toStringDraftValue = (value: unknown) => {
+  return typeof value === 'string' ? value : '';
 };
 
 export default MeetingInputPanel;

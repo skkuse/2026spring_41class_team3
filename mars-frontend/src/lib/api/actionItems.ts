@@ -46,6 +46,12 @@ export interface ActionItemAssigneeUpdateRequest {
   assignee_id: string;
 }
 
+export interface ActionItemPriorityUpdateRequest {
+  priority: number;
+  importance: number;
+  urgency: number;
+}
+
 export interface GetProjectActionItemsParams {
   status?: string;
   assignee_id?: string;
@@ -68,6 +74,13 @@ export const updateActionItemStatus = (itemId: string, body: ActionItemStatusUpd
 
 export const updateActionItemAssignee = (itemId: string, body: ActionItemAssigneeUpdateRequest) => {
   return apiRequest<ActionItemResponse>(`/action-items/${encodeURIComponent(itemId)}/assignee`, {
+    method: 'PATCH',
+    body,
+  });
+};
+
+export const updateActionItemPriority = (itemId: string, body: ActionItemPriorityUpdateRequest) => {
+  return apiRequest<ActionItemResponse>(`/action-items/${encodeURIComponent(itemId)}/priority`, {
     method: 'PATCH',
     body,
   });

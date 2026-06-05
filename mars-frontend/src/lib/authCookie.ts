@@ -45,6 +45,11 @@ export const getStoredUserIdentity = (): StoredUserIdentity | null => {
   return null;
 };
 
+export const clearStoredUserIdentity = () => {
+  deleteCookie(USER_UUID_COOKIE_NAME);
+  deleteCookie(USER_IDENTITY_COOKIE_NAME);
+};
+
 const setCookie = (name: string, value: string) => {
   document.cookie = [
     `${name}=${encodeURIComponent(value)}`,
@@ -64,4 +69,13 @@ const getCookie = (name: string) => {
   }
 
   return decodeURIComponent(cookie.split('=').slice(1).join('='));
+};
+
+const deleteCookie = (name: string) => {
+  document.cookie = [
+    `${name}=`,
+    'path=/',
+    'max-age=0',
+    'samesite=lax',
+  ].join('; ');
 };

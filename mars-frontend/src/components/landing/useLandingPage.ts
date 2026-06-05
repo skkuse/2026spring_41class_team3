@@ -1,7 +1,7 @@
 import type * as React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ApiError, checkUserAvailability, createProject, createUser, joinProject, loginUser } from '../../lib/api';
+import { ApiError, checkUserAvailability, createProject, createUser, getProject, joinProject, loginUser } from '../../lib/api';
 import { getStoredUserIdentity } from '../../lib/authCookie';
 import {
   getAvailabilityErrorMessage,
@@ -274,16 +274,17 @@ export const useLandingPage = () => {
         project_code: projectCode,
         user_id: currentUser.uuid,
       });
+      const projectDetail = await getProject(joinedProject.project_id);
 
       setIsJoinModalOpen(false);
       navigate('/dashboard', {
         state: {
           userId: currentUser.id,
+          userName: currentUser.name,
           userUuid: currentUser.uuid,
           projectId: joinedProject.project_id,
-          // TODO: /projects/join 응답에 project_code/project_name이 추가되면
-          // 입력값 projectCode 대신 응답의 project_code를 쓰고 title도 project_name으로 넘긴다.
-          projectCode,
+          projectCode: projectDetail.project_code,
+          title: projectDetail.name,
         },
       });
     } catch (error) {
@@ -340,6 +341,7 @@ export const useLandingPage = () => {
       setIsCopied(false);
       setPendingNavigateData({
         userId: currentUser.id,
+        userName: currentUser.name,
         userUuid: currentUser.uuid,
         projectId: createdProject.id,
         projectCode: createdProject.project_code,
