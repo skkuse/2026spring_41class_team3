@@ -17,13 +17,13 @@ class GPTResponseParseException(HTTPException):
         super().__init__(status_code=500, detail=detail)
 
 
-BERT_RECALL_THRESHOLD = 0.4
+BERT_f1_THRESHOLD = 0.48
 
 class AnalysisQualityError(HTTPException):
-    def __init__(self, recall: float):
+    def __init__(self, f1: float):
         super().__init__(
             status_code=422,
-            detail=f"BERTScore recall({recall:.4f})이 기준({BERT_RECALL_THRESHOLD}) 미달입니다. 재분석을 요청해주세요.",
+            detail=f"BERTScore f1({f1:.4f})이 기준({BERT_f1_THRESHOLD}) 미달입니다. 재분석을 요청해주세요.",
         )
 
 
