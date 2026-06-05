@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from app.models import Project, User
 from app.schemas import ProjectCreate
 from fastapi import HTTPException
@@ -28,6 +29,18 @@ def create_project(db: Session, project: ProjectCreate) -> Project:
 
 def get_project(db: Session, project_id: uuid.UUID) -> Project:
     return db.query(Project).filter(Project.id == project_id).first()
+
+def get_projects_by_user(db: Session, user_id: uuid.UUID):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="유저를 찾을 수 없습니다.")
+
+    return (
+        db.query(Project)
+        .filter(or_(Project.owner_id == user_id, Project.id == user.project_id))
+        .order_by(Project.created_at.desc())
+        .all()
+    )
 
 
 def add_member(db: Session, project_id: uuid.UUID, user_id: uuid.UUID):

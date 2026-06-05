@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from app.schemas import UserCreate, UserResponse
-from app.crud import create_user, get_user, get_user_by_username
+from app.schemas import UserCreate, UserResponse, UserProjectResponse
+from app.crud import create_user, get_user, get_user_by_username, get_projects_by_user
 from app.db.database import SessionLocal
 import uuid
+from typing import List
 
 router = APIRouter()
 
@@ -49,11 +50,14 @@ def read_user(user_id: uuid.UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
+@router.get("/users/{user_id}/projects", response_model=List[UserProjectResponse], summary="사용자가 참여한 프로젝트 목록 조회")
+def read_user_projects(user_id: uuid.UUID, db: Session = Depends(get_db)):
+    return get_projects_by_user(db, user_id)
+
 
 
 @router.delete("/users/{user_id}", summary="유저 삭제")
 def delete_user_api(user_id: uuid.UUID, db: Session = Depends(get_db)):
     from app.crud import delete_user
     return delete_user(db, user_id)
-
 
