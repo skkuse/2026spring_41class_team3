@@ -29,7 +29,7 @@ function ActionItems() {
   const [viewMode, setViewMode] = useState<ActionItemsViewMode>('리스트');
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [showAllItems, setShowAllItems] = useState(false);
+  const [showMyItems, setShowMyItems] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [deletingItemIds, setDeletingItemIds] = useState<string[]>([]);
   const [actionItemOrderIds, setActionItemOrderIds] = useState<string[]>([]);
@@ -60,14 +60,10 @@ function ActionItems() {
       const projectMembersResult = await getProjectMembers(projectId)
         .then((projectMembers) => ({ status: 'fulfilled' as const, value: projectMembers }))
         .catch((error: unknown) => ({ status: 'rejected' as const, reason: error }));
-      const assigneeIds = projectMembersResult.status === 'fulfilled'
-        ? projectMembersResult.value.map((member) => member.id)
-        : [];
       const projectActionItemsResult = await loadProjectActionItems({
         projectId,
         currentUserId,
-        assigneeIds,
-        shouldLoadAll: showAllItems,
+        shouldLoadMine: showMyItems,
       })
         .then((projectActionItems) => ({ status: 'fulfilled' as const, value: projectActionItems }))
         .catch((error: unknown) => ({ status: 'rejected' as const, reason: error }));
@@ -89,11 +85,11 @@ function ActionItems() {
       if (projectActionItemsResult.status === 'fulfilled') {
         setActionItemOrderIds(readActionItemOrder(actionItemOrderStorageKey));
         setActionItems(projectActionItemsResult.value.items.map(toActionItem));
-        setMessage(projectActionItemsResult.value.isFallback
-          ? '일부 조회가 실패해 불러온 액션 아이템만 표시합니다.'
-          : projectMembersResult.status === 'rejected'
+        setMessage(
+          projectMembersResult.status === 'rejected'
             ? '담당자 목록을 불러오지 못했지만 액션 아이템은 표시합니다.'
-          : '');
+            : '',
+        );
       } else {
         console.error('[ActionItems][ItemsLoadFailed]', {
           projectId,
@@ -111,7 +107,7 @@ function ActionItems() {
     return () => {
       isMounted = false;
     };
-  }, [actionItemOrderStorageKey, currentUserId, projectId, showAllItems]);
+  }, [actionItemOrderStorageKey, currentUserId, projectId, showMyItems]);
 
   const visibleActionItems = useMemo(
     () => sortActionItemsByOrder(actionItems, actionItemOrderIds),
@@ -310,10 +306,9 @@ function ActionItems() {
         <ActionItemsHeader
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          users={users}
           currentUserId={currentUserId}
-          showAllItems={showAllItems}
-          onShowAllItemsChange={setShowAllItems}
+          showMyItems={showMyItems}
+          onShowMyItemsChange={setShowMyItems}
           totalCount={visibleActionItems.length}
           completedCount={completedActionItemCount}
         />
@@ -361,19 +356,13 @@ function ActionItems() {
 const loadProjectActionItems = async ({
   projectId,
   currentUserId,
-  assigneeIds,
-  shouldLoadAll,
+  shouldLoadMine,
 }: {
   projectId: string;
   currentUserId: string;
-  assigneeIds: string[];
-  shouldLoadAll: boolean;
+  shouldLoadMine: boolean;
 }) => {
-  if (shouldLoadAll && assigneeIds.length > 0) {
-    return loadProjectActionItemsByAssignees(projectId, assigneeIds);
-  }
-
-  const assigneeId = currentUserId || undefined;
+  const assigneeId = shouldLoadMine ? currentUserId : undefined;
 
   try {
     return {
@@ -381,7 +370,6 @@ const loadProjectActionItems = async ({
         assignee_id: assigneeId,
         sort: 'created_at_desc',
       }),
-      isFallback: false,
     };
   } catch (error) {
     console.error('[ActionItems][SortedLoadFailed]', {
@@ -395,7 +383,6 @@ const loadProjectActionItems = async ({
         items: await getProjectActionItems(projectId, {
           assignee_id: assigneeId,
         }),
-        isFallback: true,
       };
     } catch (fallbackError) {
       console.error('[ActionItems][ProjectLoadFailed]', {
@@ -407,41 +394,6 @@ const loadProjectActionItems = async ({
       throw fallbackError;
     }
   }
-};
-
-const loadProjectActionItemsByAssignees = async (projectId: string, assigneeIds: string[]) => {
-  const actionItemResults = await Promise.allSettled(
-    assigneeIds
-      .filter(Boolean)
-      .map(async (assigneeId) => {
-        try {
-          return await getProjectActionItems(projectId, {
-            assignee_id: assigneeId,
-            sort: 'created_at_desc',
-          });
-        } catch (error) {
-          console.error('[ActionItems][AssigneeSortedLoadFailed]', {
-            projectId,
-            assigneeId,
-            error,
-          });
-
-          return getProjectActionItems(projectId, { assignee_id: assigneeId });
-        }
-      }),
-  );
-  const fulfilledItems = actionItemResults.flatMap((result) =>
-    result.status === 'fulfilled' ? result.value : [],
-  );
-
-  return {
-    items: dedupeActionItems(fulfilledItems),
-    isFallback: actionItemResults.some((result) => result.status === 'rejected'),
-  };
-};
-
-const dedupeActionItems = (items: ActionItemResponse[]) => {
-  return Array.from(new Map(items.map((item) => [item.id, item])).values());
 };
 
 const sortActionItemsByOrder = (items: ActionItem[], orderIds: string[]) => {

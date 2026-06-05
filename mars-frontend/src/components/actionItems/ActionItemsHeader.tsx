@@ -1,15 +1,14 @@
 import { LayoutGrid, ListChecks } from 'lucide-react';
 import { typography } from '../../lib/typography';
 import { priorityLegend } from './actionItemConfig';
-import type { ActionItemsViewMode, User } from './types';
+import type { ActionItemsViewMode } from './types';
 
 interface ActionItemsHeaderProps {
   viewMode: ActionItemsViewMode;
   onViewModeChange: (viewMode: ActionItemsViewMode) => void;
-  users: User[];
   currentUserId: string;
-  showAllItems: boolean;
-  onShowAllItemsChange: (showAllItems: boolean) => void;
+  showMyItems: boolean;
+  onShowMyItemsChange: (showMyItems: boolean) => void;
   totalCount: number;
   completedCount: number;
 }
@@ -17,14 +16,13 @@ interface ActionItemsHeaderProps {
 function ActionItemsHeader({
   viewMode,
   onViewModeChange,
-  users,
   currentUserId,
-  showAllItems,
-  onShowAllItemsChange,
+  showMyItems,
+  onShowMyItemsChange,
   totalCount,
   completedCount,
 }: ActionItemsHeaderProps) {
-  const currentUser = users.find((user) => user.id === currentUserId);
+  const canFilterByCurrentUser = Boolean(currentUserId);
 
   return (
     <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -61,12 +59,12 @@ function ActionItemsHeader({
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <input
               type="checkbox"
-              checked={showAllItems}
-              disabled={!currentUser}
-              onChange={(event) => onShowAllItemsChange(event.target.checked)}
+              checked={showMyItems}
+              disabled={!canFilterByCurrentUser}
+              onChange={(event) => onShowMyItemsChange(event.target.checked)}
               className="h-4 w-4 accent-primary disabled:cursor-not-allowed disabled:opacity-50"
             />
-            전체 할일 보기
+            나의 할일만 보기
           </label>
 
           <div className="grid grid-cols-2 rounded-lg border border-border bg-secondary p-1">
