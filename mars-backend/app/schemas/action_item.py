@@ -20,7 +20,7 @@ class ActionItemUpdate(BaseModel):
 
 
 class ActionItemAssigneeUpdate(BaseModel):
-    assignee_id: uuid.UUID
+    assignee_id: Optional[uuid.UUID] = None
 
 
 class ActionItemPriorityUpdate(BaseModel):
