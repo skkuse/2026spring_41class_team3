@@ -120,6 +120,26 @@ export const getJoinProjectErrorMessage = (error: unknown) => {
   return '프로젝트 참여에 실패했습니다. 잠시 후 다시 시도해 주세요.';
 };
 
+export const getUserProjectsErrorMessage = (error: unknown) => {
+  if (error instanceof ApiError) {
+    if (error.status === 404) {
+      return '접속한 사용자 정보를 찾을 수 없습니다. 다시 접속해 주세요.';
+    }
+
+    if (error.status === 422) {
+      return '사용자 정보를 다시 확인해 주세요.';
+    }
+  }
+
+  const networkMessage = getNetworkErrorMessage(error);
+
+  if (networkMessage) {
+    return networkMessage;
+  }
+
+  return '기존 프로젝트를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+};
+
 export const logCreateProjectError = (error: unknown, payload: unknown) => {
   console.error('[Landing][CreateProject:Failed]', {
     payload,

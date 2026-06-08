@@ -83,7 +83,7 @@ export const createAndFetchMeetingActionItems = async ({
 
 export const toActionItemDraft = (
   item: ActionItemResponse,
-  fallbackAssigneeId: string,
+  fallbackAssigneeId = '',
   assigneeOptions: User[] = [],
 ): ExtractedActionItemDraft => {
   const parsedTask = parseAssigneeTask(item.description ?? '', assigneeOptions, fallbackAssigneeId);

@@ -1,7 +1,17 @@
 import type * as React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ApiError, checkUserAvailability, createProject, createUser, getProject, joinProject, loginUser } from '../../lib/api';
+import {
+  ApiError,
+  checkUserAvailability,
+  createProject,
+  createUser,
+  getProject,
+  getUserProjects,
+  joinProject,
+  loginUser,
+} from '../../lib/api';
+import type { UserProjectResponse } from '../../lib/api';
 import { getStoredUserIdentity } from '../../lib/authCookie';
 import {
   getAvailabilityErrorMessage,
@@ -11,6 +21,7 @@ import {
   getLoginUserErrorMessage,
   getProjectDeadlineValidationMessage,
   getProjectValidationMessage,
+  getUserProjectsErrorMessage,
   logCreateProjectError,
   storeUserIdentity,
   toDeadlineISOString,
@@ -25,6 +36,7 @@ export const useLandingPage = () => {
 
   const [viewMode, setViewMode] = useState<LandingViewMode>('landing');
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [isExistingProjectsModalOpen, setIsExistingProjectsModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -48,6 +60,7 @@ export const useLandingPage = () => {
   const [isDeadlineWarningVisible, setIsDeadlineWarningVisible] = useState(false);
 
   const [createdProjectCode, setCreatedProjectCode] = useState('');
+  const [existingProjects, setExistingProjects] = useState<UserProjectResponse[]>([]);
   const [pendingNavigateData, setPendingNavigateData] = useState<ProjectNavigationState | null>(null);
 
   const resetCreateProjectForm = () => {
@@ -245,6 +258,62 @@ export const useLandingPage = () => {
     setIsJoinModalOpen(false);
   };
 
+  const handleOpenExistingProjectsModal = async () => {
+    if (!currentUser) {
+      setDuplicateCheckMessage('먼저 사용자 아이디로 접속하거나 새 아이디를 만들어 주세요.');
+      return;
+    }
+
+    if (!currentUser.uuid) {
+      setErrorMessage('사용자 정보를 확인할 수 없습니다. 다시 접속한 뒤 시도해 주세요.');
+      return;
+    }
+
+    setErrorMessage('');
+    setExistingProjects([]);
+    setIsExistingProjectsModalOpen(true);
+    setIsLoading(true);
+
+    try {
+      const projects = await getUserProjects(currentUser.uuid);
+
+      setExistingProjects(projects);
+    } catch (error) {
+      console.error('[Landing][UserProjects:Failed]', {
+        userUuid: currentUser.uuid,
+        error,
+      });
+      setErrorMessage(getUserProjectsErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCloseExistingProjectsModal = () => {
+    setIsExistingProjectsModalOpen(false);
+    setErrorMessage('');
+  };
+
+  const handleSelectExistingProject = (project: UserProjectResponse) => {
+    if (!currentUser) {
+      setErrorMessage('먼저 사용자 아이디로 접속하거나 새 아이디를 만들어 주세요.');
+      return;
+    }
+
+    setIsExistingProjectsModalOpen(false);
+    navigate('/dashboard', {
+      state: {
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userUuid: currentUser.uuid,
+        projectId: project.id,
+        projectCode: project.project_code,
+        title: project.name,
+        role: 'member',
+      },
+    });
+  };
+
   const handleJoinSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -387,6 +456,7 @@ export const useLandingPage = () => {
     state: {
       viewMode,
       isJoinModalOpen,
+      isExistingProjectsModalOpen,
       isSuccessModalOpen,
       isLoading,
       isCopied,
@@ -407,12 +477,16 @@ export const useLandingPage = () => {
       duplicateCheckMessage,
       errorMessage,
       createdProjectCode,
+      existingProjects,
     },
     actions: {
       goToLanding,
       handleCreateProjectClick,
       handleOpenJoinModal,
       handleCloseJoinModal,
+      handleOpenExistingProjectsModal,
+      handleCloseExistingProjectsModal,
+      handleSelectExistingProject,
       handleUserIdInputChange,
       handleUserNameInputChange,
       handleCheckDuplicate,
