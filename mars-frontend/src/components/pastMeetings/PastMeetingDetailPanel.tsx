@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import type { PastMeetingDetail } from './types';
 import { typography } from '../../lib/typography';
 
@@ -6,8 +8,10 @@ interface PastMeetingDetailPanelProps {
 }
 
 function PastMeetingDetailPanel({ detail }: PastMeetingDetailPanelProps) {
+  const [isRawTextOpen, setIsRawTextOpen] = useState(false);
   const score = toProductivityPercent(detail.productivity_score);
   const scoreLabel = score.toFixed(1);
+  const rawText = detail.raw_text.trim();
 
   return (
     <section className="mt-4 rounded-lg border border-border bg-secondary p-5">
@@ -33,7 +37,7 @@ function PastMeetingDetailPanel({ detail }: PastMeetingDetailPanelProps) {
             </div>
           </div>
           <div className="mt-4 flex items-end gap-2">
-          <span className={`pb-1 ${typography.pageDescription}`}>생산성 점수</span>
+            <span className={`pb-1 ${typography.pageDescription}`}>생산성 점수</span>
             <span className="text-2xl font-semibold text-primary">{scoreLabel}</span>
             <span className="pb-1 text-sm text-muted-foreground">/ 100</span>
           </div>
@@ -60,6 +64,33 @@ function PastMeetingDetailPanel({ detail }: PastMeetingDetailPanelProps) {
             {detail.qualitative_feedback}
           </p>
         </div>
+      </div>
+
+      <div className="mt-5">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-left transition hover:border-primary/50 hover:bg-card/80"
+          aria-expanded={isRawTextOpen}
+          onClick={() => setIsRawTextOpen((open) => !open)}
+        >
+          <span className={typography.bodyStrong}>회의록 원문 보기</span>
+          <ChevronDown
+            className={[
+              'h-5 w-5 text-muted-foreground transition-transform',
+              isRawTextOpen ? 'rotate-180' : '',
+            ].join(' ')}
+          />
+        </button>
+
+        {isRawTextOpen ? (
+          <div className="mt-3 max-h-80 overflow-y-auto rounded-lg border border-border bg-card p-4">
+            <p
+              className={`whitespace-pre-wrap ${rawText ? typography.body : 'text-sm text-muted-foreground'}`}
+            >
+              {rawText || '회의록 원문이 없습니다.'}
+            </p>
+          </div>
+        ) : null}
       </div>
     </section>
   );
