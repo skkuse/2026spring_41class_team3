@@ -2,7 +2,7 @@ export { API_BASE_URL, API_REQUEST_TIMEOUT_MS } from './config';
 export { apiRequest } from './httpClient';
 export { createAgenda, getProposedAgendas } from './agendas';
 export { createActionItem, createMeetingActionItems, deleteActionItem, getProjectActionItems, updateActionItemAssignee, updateActionItemPriority, updateActionItemStatus } from './actionItems';
-export { createMeeting, deleteMeeting, getMeeting } from './meetings';
+export { createMeeting, deleteMeeting, getMeeting, getProjectMeetings } from './meetings';
 export { createProject, getProject, getProjectMembers, joinProject } from './projects';
 export { checkUserAvailability, createUser, getUserProjects, loginUser } from './users';
 export { ApiError } from './types';

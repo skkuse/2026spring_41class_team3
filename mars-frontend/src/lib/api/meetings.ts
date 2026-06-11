@@ -29,6 +29,10 @@ export const createMeeting = (projectId: string, body: MeetingCreateRequest) => 
   });
 };
 
+export const getProjectMeetings = (projectId: string) => {
+  return apiRequest<MeetingResponse[]>(`/projects/${encodeURIComponent(projectId)}/meetings`);
+};
+
 export const getMeeting = (projectId: string, meetingId: string) => {
   return apiRequest<MeetingResponse>(
     `/projects/${encodeURIComponent(projectId)}/meetings/${encodeURIComponent(meetingId)}`,

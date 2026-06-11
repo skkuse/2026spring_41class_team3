@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.schemas import MeetingCreate, MeetingResponse, MeetingSummaryCreate, MeetingProductivityCreate, AgendaCreate, MeetingDetailResponse, AgendaResponse
 from app.schemas.meeting import MeetingAnalyzeResponse
-from app.crud.meeting import create_meeting, create_summary, create_productivity, create_agenda, get_meeting, get_proposed_agendas
+from app.crud.meeting import create_meeting, create_summary, create_productivity, create_agenda, get_meetings_by_project, get_meeting, get_proposed_agendas
 from app.services.ai_service import analyze_meeting
 from app.db.database import SessionLocal
 import uuid
@@ -21,6 +21,10 @@ def get_db():
 @router.post("/projects/{project_id}/meetings", status_code=201, summary = "미팅 생성")
 def create_new_meeting(project_id: uuid.UUID, meeting: MeetingCreate, db: Session = Depends(get_db)):
     return create_meeting(db, meeting, project_id)
+
+@router.get("/projects/{project_id}/meetings", response_model=List[MeetingResponse], summary="프로젝트 미팅 목록 조회")
+def read_project_meetings(project_id: uuid.UUID, db: Session = Depends(get_db)):
+    return get_meetings_by_project(db, project_id)
 
 @router.post("/projects/{project_id}/meetings/{meeting_id}/summary", summary = "AI 회의 요약 생성")
 def post_meeting_summary(project_id: uuid.UUID, meeting_id: uuid.UUID, summary: MeetingSummaryCreate, db: Session = Depends(get_db)):
