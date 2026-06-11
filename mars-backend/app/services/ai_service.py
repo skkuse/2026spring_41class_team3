@@ -164,15 +164,7 @@ def analyze_meeting(db: Session, meeting_id: uuid.UUID) -> MeetingAnalyzeRespons
     if f1 < 0.48:
         raise AnalysisQualityError(f1=f1)
 
-    from app.models import Meeting as MeetingModel
-    meeting_row = db.query(MeetingModel).filter(MeetingModel.id == meeting_id).first()
-    project_id = meeting_row.project_id if meeting_row else None
-
-    try:
-        save_analysis_result(db, meeting_id, project_id, gpt_response, bert_metrics)
-    except Exception as e:
-        raise DatabaseSaveException(detail=f"DB 저장 실패: {e}")
-
+    # DB 저장은 프론트엔드에서 사용자 확정 후에 수행
     return MeetingAnalyzeResponse(
         meeting_id=meeting_id,
         summary=gpt_response.get("summary", ""),
