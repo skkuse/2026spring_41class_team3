@@ -5,7 +5,6 @@ import {
   Lightbulb,
   ListTodo,
   LogOut,
-  Palette,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -40,11 +39,6 @@ const navItems = [
     label: '제안',
     path: '/suggestions',
     Icon: Lightbulb,
-  },
-  {
-    label: '스타일',
-    path: '/style-guide',
-    Icon: Palette,
   },
 ];
 
