@@ -155,15 +155,6 @@ def save_analysis_result(
         )
         db.add(db_prod)
 
-    for item in gpt_response.get("action_items", []):
-        db_item = ActionItem(
-            meeting_id=meeting_id,
-            description=item.get("task", ""),
-            priority=item.get("priority"),
-            status="TODO",
-        )
-        db.add(db_item)
-
     next_agendas = gpt_response.get("next_agenda", [])
     if next_agendas and project_id:
         db_agenda = Agenda(
