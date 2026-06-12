@@ -63,7 +63,7 @@
 * **AI Orchestration**: OpenAI 및 Hugging Face API 간의 Interface 인터랙션 오류 차단
 * **Edge Case Handling**: LLM 컨텍스트 토큰 제한 이상 현상 및 JSON 포맷팅 예외 처리
 
-### 2) Performance Goals & Constraints (성능 제약 조건)
+### 2) Performance Goals & Constraints 
 * **지연 시간 제한**: 일반적인 API 요청 및 DB CRUD 트랜잭션 처리는 **5초 이내** 완료
 * **AI 파이프라인**: 텍스트 분석 및 텍스트 마이닝, 생산성 피드백 전체 오케스트레이션은 최대 **2분 이내** 완료
 
@@ -73,7 +73,7 @@
 
 ---
 
-## 👥 5. Members & Roles
+## 👥 Members & Roles
 
 * **장정우 (Leader)**: AI Pipeline & System Architecture Design, Prompt Engineering & Optimization, BERTScore Evaluation Pipeline Development
 * **김도현(Backend)**: Backend RESTful API Development, Database Design, CRUD Layer Architect & Optimization 
