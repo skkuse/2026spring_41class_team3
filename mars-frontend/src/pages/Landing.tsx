@@ -1,4 +1,5 @@
 import CreateProjectForm from '../components/landing/CreateProjectForm';
+import ExistingProjectsModal from '../components/landing/ExistingProjectsModal';
 import JoinProjectModal from '../components/landing/JoinProjectModal';
 import LandingHero from '../components/landing/LandingHero';
 import ProjectCreatedModal from '../components/landing/ProjectCreatedModal';
@@ -29,7 +30,17 @@ const Landing = () => {
             onSwitchToAccessUser={actions.handleSwitchToAccessUser}
             onCreateProjectClick={actions.handleCreateProjectClick}
             onJoinProjectClick={actions.handleOpenJoinModal}
+            onOpenExistingProjectsClick={actions.handleOpenExistingProjectsModal}
           />
+          {state.isExistingProjectsModalOpen && (
+            <ExistingProjectsModal
+              projects={state.existingProjects}
+              errorMessage={state.errorMessage}
+              isLoading={state.isLoading}
+              onClose={actions.handleCloseExistingProjectsModal}
+              onSelectProject={actions.handleSelectExistingProject}
+            />
+          )}
           {state.isJoinModalOpen && (
             <JoinProjectModal
               projectCode={state.projectCode}

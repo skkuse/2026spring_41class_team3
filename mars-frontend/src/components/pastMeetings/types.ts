@@ -18,4 +18,5 @@ export interface PastMeetingDetail {
   created_at: string;
   actionItems: number;
   completed: number;
+  next_agenda: string[];
 }

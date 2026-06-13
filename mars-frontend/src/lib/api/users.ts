@@ -20,6 +20,12 @@ export interface UserResponse {
   created_at: string;
 }
 
+export interface UserProjectResponse {
+  id: string;
+  project_code: string;
+  name: string;
+}
+
 export const checkUserAvailability = (username: string) => {
   const query = new URLSearchParams({ username });
 
@@ -39,4 +45,8 @@ export const loginUser = (username: string) => {
   return apiRequest<UserResponse>(`/users/login?${query.toString()}`, {
     method: 'POST',
   });
+};
+
+export const getUserProjects = (userId: string) => {
+  return apiRequest<UserProjectResponse[]>(`/users/${encodeURIComponent(userId)}/projects`);
 };

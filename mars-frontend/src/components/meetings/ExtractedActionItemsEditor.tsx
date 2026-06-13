@@ -184,9 +184,7 @@ function ExtractedActionItemCard({
             disabled={isLocked}
             className="mt-1 w-full rounded-md border border-input bg-input-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-ring"
           >
-            {!item.assignee_id && (
-              <option value="">담당자 선택</option>
-            )}
+            <option value="">-</option>
             {assigneeOptions.map((user) => (
               <option key={user.id} value={user.id}>
                 {user.name}

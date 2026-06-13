@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { User } from '../actionItems/types';
 import ExtractedActionItemsEditor from './ExtractedActionItemsEditor';
 import {
@@ -19,9 +19,11 @@ const placeholder = `이곳에 입력해주세요.`;
 
 function MeetingInputPanel() {
   const navigate = useNavigate();
-  const [title, setTitle] = useState('');
-  const [purpose, setPurpose] = useState('');
-  const [rawText, setRawText] = useState('');
+  const location = useLocation();
+  const meetingDraft = getMeetingDraftFromLocationState(location.state);
+  const [title, setTitle] = useState(meetingDraft.title);
+  const [purpose, setPurpose] = useState(meetingDraft.purpose);
+  const [rawText, setRawText] = useState(meetingDraft.rawText);
   const [isCreatingMeeting, setIsCreatingMeeting] = useState(false);
   const [isExtractingActionItems, setIsExtractingActionItems] = useState(false);
   const [isConfirmingActionItems, setIsConfirmingActionItems] = useState(false);
@@ -31,7 +33,6 @@ function MeetingInputPanel() {
   const [createdMeeting, setCreatedMeeting] = useState<MeetingResponse | null>(null);
   const [extractedItems, setExtractedItems] = useState<ExtractedActionItemDraft[]>([]);
   const [assigneeOptions, setAssigneeOptions] = useState<User[]>([]);
-  const firstAssigneeId = assigneeOptions[0]?.id ?? '';
   const isMeetingCreated = Boolean(createdMeeting?.id);
   const isBusy = isCreatingMeeting || isExtractingActionItems || isConfirmingActionItems;
   const pipelineSteps = [
@@ -159,9 +160,8 @@ function MeetingInputPanel() {
         projectId,
         meetingId,
         requestedAt,
-        assigneeId: firstAssigneeId,
       });
-      const draftItems = extractedActionItems.map((item) => toActionItemDraft(item, firstAssigneeId, assigneeOptions));
+      const draftItems = extractedActionItems.map((item) => toActionItemDraft(item, '', assigneeOptions));
 
       setMessageTone('success');
       setMessage(draftItems.length > 0
@@ -216,7 +216,7 @@ function MeetingInputPanel() {
       {
         id: `draft-${Date.now()}`,
         description: '',
-        assignee_id: firstAssigneeId,
+        assignee_id: '',
         status: 'TODO',
         priority: 'DO',
         deadline: getFutureDate(7),
@@ -245,11 +245,11 @@ function MeetingInputPanel() {
       return;
     }
 
-    const invalidItem = extractedItems.find((item) => !item.description.trim() || !item.assignee_id);
+    const invalidItem = extractedItems.find((item) => !item.description.trim());
 
     if (invalidItem) {
       setMessageTone('error');
-      setMessage('모든 액션 아이템의 세부 내용과 담당자를 입력해 주세요.');
+      setMessage('모든 액션 아이템의 세부 내용을 입력해 주세요.');
       return;
     }
 
@@ -430,7 +430,7 @@ const toActionItemCreateRequest = (
   const priorityLevels = getPriorityLevels(item.priority);
 
   return {
-    assignee_id: item.assignee_id,
+    assignee_id: item.assignee_id || null,
     meeting_id: meetingId,
     description: item.description.trim(),
     status: item.status,
@@ -482,6 +482,36 @@ const toDeadlineISOString = (deadline: string) => {
   }
 
   return parsedDeadline.toISOString();
+};
+
+const getMeetingDraftFromLocationState = (state: unknown) => {
+  const emptyDraft = {
+    title: '',
+    purpose: '',
+    rawText: '',
+  };
+
+  if (!state || typeof state !== 'object') {
+    return emptyDraft;
+  }
+
+  const meetingDraft = (state as { meetingDraft?: unknown }).meetingDraft;
+
+  if (!meetingDraft || typeof meetingDraft !== 'object') {
+    return emptyDraft;
+  }
+
+  const draftRecord = meetingDraft as Record<string, unknown>;
+
+  return {
+    title: toStringDraftValue(draftRecord.title),
+    purpose: toStringDraftValue(draftRecord.purpose),
+    rawText: toStringDraftValue(draftRecord.rawText),
+  };
+};
+
+const toStringDraftValue = (value: unknown) => {
+  return typeof value === 'string' ? value : '';
 };
 
 export default MeetingInputPanel;

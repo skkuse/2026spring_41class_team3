@@ -51,6 +51,10 @@ export const joinProject = (body: JoinProjectRequest) => {
   });
 };
 
+export const getProject = (projectId: string) => {
+  return apiRequest<ProjectResponse>(`/projects/${encodeURIComponent(projectId)}`);
+};
+
 export const getProjectMembers = (projectId: string) => {
   return apiRequest<ProjectMemberResponse[]>(`/projects/${encodeURIComponent(projectId)}/members`);
 };

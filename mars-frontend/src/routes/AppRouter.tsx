@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import AppLayout from '../layouts/AppLayout';
+import ProtectedRoute from './ProtectedRoute';
 
 import Landing from '../pages/Landing';
 import Dashboard from '../pages/DashBoard';
@@ -17,35 +18,40 @@ const router = createBrowserRouter([
     Component: Landing,
   },
   {
-    Component: AppLayout,
+    Component: ProtectedRoute,
     children: [
       {
-        path: '/dashboard',
-        Component: Dashboard,
-      },
-      {
-        path: '/meetings',
-        Component: Meetings,
-      },
-      {
-        path: '/meetings/past',
-        Component: PastMeetings,
-      },
-      {
-        path: '/meeting/new',
-        Component: MeetingInput,
-      },
-      {
-        path: '/actions',
-        Component: ActionItems,
-      },
-      {
-        path: '/suggestions',
-        Component: Suggestions,
-      },
-      {
-        path: '/style-guide',
-        Component: StyleGuide,
+        Component: AppLayout,
+        children: [
+          {
+            path: '/dashboard',
+            Component: Dashboard,
+          },
+          {
+            path: '/meetings',
+            Component: Meetings,
+          },
+          {
+            path: '/meetings/past',
+            Component: PastMeetings,
+          },
+          {
+            path: '/meeting/new',
+            Component: MeetingInput,
+          },
+          {
+            path: '/actions',
+            Component: ActionItems,
+          },
+          {
+            path: '/suggestions',
+            Component: Suggestions,
+          },
+          {
+            path: '/style-guide',
+            Component: StyleGuide,
+          },
+        ],
       },
     ],
   },

@@ -18,6 +18,8 @@ export interface MeetingResponse {
   productivity_score?: number | null;
   created_at?: string | null;
   date?: string | null;
+  next_agenda?: string[] | null;
+  proposed_agendas?: string[] | null;
 }
 
 export const createMeeting = (projectId: string, body: MeetingCreateRequest) => {
@@ -25,6 +27,10 @@ export const createMeeting = (projectId: string, body: MeetingCreateRequest) => 
     method: 'POST',
     body,
   });
+};
+
+export const getProjectMeetings = (projectId: string) => {
+  return apiRequest<MeetingResponse[]>(`/projects/${encodeURIComponent(projectId)}/meetings`);
 };
 
 export const getMeeting = (projectId: string, meetingId: string) => {

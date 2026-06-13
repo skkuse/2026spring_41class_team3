@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class ActionItemCreate(BaseModel):
-    assignee_id: uuid.UUID
+    assignee_id: Optional[uuid.UUID] = None
     meeting_id: uuid.UUID
     description: str
     status: str = "TODO"
@@ -20,7 +20,7 @@ class ActionItemUpdate(BaseModel):
 
 
 class ActionItemAssigneeUpdate(BaseModel):
-    assignee_id: uuid.UUID
+    assignee_id: Optional[uuid.UUID] = None
 
 
 class ActionItemPriorityUpdate(BaseModel):
@@ -31,7 +31,7 @@ class ActionItemPriorityUpdate(BaseModel):
 
 class ActionItemResponse(BaseModel):
     id: uuid.UUID
-    assignee_id: uuid.UUID
+    assignee_id: Optional[uuid.UUID] = None
     meeting_id: uuid.UUID
     description: str
     status: str

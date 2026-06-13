@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
+import { typography } from '../../lib/typography';
 import type { PastMeeting } from './types';
 
 interface PastMeetingCardProps {
@@ -33,12 +34,12 @@ function PastMeetingCard({
             className="text-left"
             onClick={() => onSelect(meeting.id)}
           >
-            <h2 className="text-xl text-foreground transition hover:text-primary">{meeting.title}</h2>
+            <h2 className={`${typography.cardTitleLarge} transition hover:text-primary`}>{meeting.title}</h2>
           </button>
-          <p className="mt-1 text-sm text-muted-foreground">{meeting.date}</p>
+          <p className={`mt-1 ${typography.pageDescription}`}>{meeting.date}</p>
         </div>
 
-        <div className="relative flex items-center gap-6 text-sm text-muted-foreground">
+        <div className="relative flex flex-wrap items-center justify-end gap-3 text-sm text-muted-foreground">
           <button
             type="button"
             className="flex gap-6 text-left transition hover:text-foreground"

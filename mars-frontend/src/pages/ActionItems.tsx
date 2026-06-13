@@ -3,7 +3,7 @@ import ActionItemsHeader from '../components/actionItems/ActionItemsHeader';
 import ActionItemsListView from '../components/actionItems/ActionItemsListView';
 import ActionItemsMatrixView from '../components/actionItems/ActionItemsMatrixView';
 import { groupActionItems } from '../components/actionItems/groupActionItems';
-import { deleteActionItem, getProjectActionItems, getProjectMembers, updateActionItemAssignee, updateActionItemStatus } from '../lib/api';
+import { deleteActionItem, getProjectActionItems, getProjectMembers, updateActionItemAssignee, updateActionItemPriority, updateActionItemStatus } from '../lib/api';
 import type { ActionItemResponse } from '../lib/api';
 import { getStoredProjectContext } from '../lib/projectContext';
 import type {
@@ -29,11 +29,12 @@ function ActionItems() {
   const [viewMode, setViewMode] = useState<ActionItemsViewMode>('리스트');
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [showAllItems, setShowAllItems] = useState(false);
+  const [showMyItems, setShowMyItems] = useState(false);
+  const [showUnassignedItems, setShowUnassignedItems] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [deletingItemIds, setDeletingItemIds] = useState<string[]>([]);
+  const [actionItemOrderIds, setActionItemOrderIds] = useState<string[]>([]);
   const [message, setMessage] = useState('');
-  const [messageTone, setMessageTone] = useState<'success' | 'error'>('success');
   const storedProjectContext = getStoredProjectContext();
   const projectId = storedProjectContext?.projectId ?? '';
   const currentUserId = storedProjectContext?.userUuid ?? '';
@@ -42,6 +43,10 @@ function ActionItems() {
     : !currentUserId
       ? '사용자 정보를 확인할 수 없습니다. 다시 접속한 뒤 시도해 주세요.'
       : '';
+  const actionItemOrderStorageKey = projectId && currentUserId
+    ? `mars:action-item-order:${projectId}:${currentUserId}`
+    : '';
+  const shouldLoadMine = showMyItems;
 
   useEffect(() => {
     if (!projectId || !currentUserId) {
@@ -57,14 +62,10 @@ function ActionItems() {
       const projectMembersResult = await getProjectMembers(projectId)
         .then((projectMembers) => ({ status: 'fulfilled' as const, value: projectMembers }))
         .catch((error: unknown) => ({ status: 'rejected' as const, reason: error }));
-      const assigneeIds = projectMembersResult.status === 'fulfilled'
-        ? projectMembersResult.value.map((member) => member.id)
-        : [];
       const projectActionItemsResult = await loadProjectActionItems({
         projectId,
         currentUserId,
-        assigneeIds,
-        shouldLoadAll: showAllItems,
+        shouldLoadMine,
       })
         .then((projectActionItems) => ({ status: 'fulfilled' as const, value: projectActionItems }))
         .catch((error: unknown) => ({ status: 'rejected' as const, reason: error }));
@@ -84,20 +85,19 @@ function ActionItems() {
       }
 
       if (projectActionItemsResult.status === 'fulfilled') {
+        setActionItemOrderIds(readActionItemOrder(actionItemOrderStorageKey));
         setActionItems(projectActionItemsResult.value.items.map(toActionItem));
-        setMessageTone('success');
-        setMessage(projectActionItemsResult.value.isFallback
-          ? '일부 조회가 실패해 불러온 액션 아이템만 표시합니다.'
-          : projectMembersResult.status === 'rejected'
+        setMessage(
+          projectMembersResult.status === 'rejected'
             ? '담당자 목록을 불러오지 못했지만 액션 아이템은 표시합니다.'
-          : '');
+            : '',
+        );
       } else {
         console.error('[ActionItems][ItemsLoadFailed]', {
           projectId,
           error: projectActionItemsResult.reason,
         });
         setActionItems([]);
-        setMessageTone('error');
         setMessage('액션 아이템을 불러오지 못했습니다.');
       }
 
@@ -109,24 +109,39 @@ function ActionItems() {
     return () => {
       isMounted = false;
     };
-  }, [currentUserId, projectId, showAllItems]);
+  }, [actionItemOrderStorageKey, currentUserId, projectId, shouldLoadMine]);
+
+  const filteredActionItems = useMemo(
+    () => showUnassignedItems
+      ? actionItems.filter((item) => !item.assignee_id)
+      : actionItems,
+    [actionItems, showUnassignedItems],
+  );
 
   const visibleActionItems = useMemo(
-    () => actionItems,
-    [actionItems],
+    () => sortActionItemsByOrder(filteredActionItems, actionItemOrderIds),
+    [filteredActionItems, actionItemOrderIds],
   );
 
   const statusGroups = useMemo(
     () => groupActionItems<ActionItemStatus>(visibleActionItems, 'status'),
     [visibleActionItems],
   );
-  const priorityGroups = useMemo(
-    () => groupActionItems<ActionItemPriority>(visibleActionItems, 'priority'),
+  const activeActionItems = useMemo(
+    () => visibleActionItems.filter((item) => item.status !== 'DONE'),
     [visibleActionItems],
   );
-  const completedActionItemCount = useMemo(
-    () => visibleActionItems.filter((item) => item.status === 'DONE').length,
+  const completedActionItems = useMemo(
+    () => visibleActionItems.filter((item) => item.status === 'DONE'),
     [visibleActionItems],
+  );
+  const priorityGroups = useMemo(
+    () => groupActionItems<ActionItemPriority>(activeActionItems, 'priority'),
+    [activeActionItems],
+  );
+  const completedActionItemCount = useMemo(
+    () => completedActionItems.length,
+    [completedActionItems],
   );
 
   const handleAssigneeChange = async (itemId: string, assigneeId: string) => {
@@ -136,10 +151,8 @@ function ActionItems() {
     setMessage('');
 
     try {
-      const updatedItem = await updateActionItemAssignee(itemId, { assignee_id: assigneeId });
+      const updatedItem = await updateActionItemAssignee(itemId, { assignee_id: assigneeId || null });
       setActionItems((items) => items.map((item) => (item.id === itemId ? toActionItem(updatedItem) : item)));
-      setMessageTone('success');
-      setMessage('담당자를 변경했습니다.');
     } catch (error) {
       console.error('[ActionItems][AssigneeUpdateFailed]', {
         itemId,
@@ -147,20 +160,60 @@ function ActionItems() {
         error,
       });
       setActionItems(previousItems);
-      setMessageTone('error');
       setMessage('담당자 변경에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
-  const handleStatusChange = async (itemId: string, status: ActionItemStatus) => {
-    const previousItems = actionItems;
+  const moveActionItemOrder = (
+    itemId: string,
+    updatedItems: ActionItem[],
+    destinationItems: ActionItem[],
+    targetItemId?: string,
+  ) => {
+    setActionItemOrderIds((currentOrderIds) => {
+      const nextOrderIds = getMovedActionItemOrder({
+        currentOrderIds,
+        updatedItems,
+        destinationItems,
+        itemId,
+        targetItemId,
+      });
 
-    setActionItems((items) => items.map((item) => (item.id === itemId ? { ...item, status } : item)));
+      writeActionItemOrder(actionItemOrderStorageKey, nextOrderIds);
+
+      return nextOrderIds;
+    });
+  };
+
+  const handleStatusChange = async (
+    itemId: string,
+    status: ActionItemStatus,
+    targetItemId?: string,
+  ) => {
+    const previousItems = actionItems;
+    const previousOrderIds = actionItemOrderIds;
+    const movingItem = previousItems.find((item) => item.id === itemId);
+
+    if (!movingItem) {
+      return;
+    }
+
+    const updatedItems = previousItems.map((item) => (item.id === itemId ? { ...item, status } : item));
+
+    setActionItems(updatedItems);
+    moveActionItemOrder(
+      itemId,
+      updatedItems,
+      updatedItems.filter((item) => item.status === status),
+      targetItemId,
+    );
     setMessage('');
 
     try {
-      const updatedItem = await updateActionItemStatus(itemId, { status });
-      setActionItems((items) => items.map((item) => (item.id === itemId ? toActionItem(updatedItem) : item)));
+      if (movingItem.status !== status) {
+        const updatedItem = await updateActionItemStatus(itemId, { status });
+        setActionItems((items) => items.map((item) => (item.id === itemId ? toActionItem(updatedItem) : item)));
+      }
     } catch (error) {
       console.error('[ActionItems][StatusUpdateFailed]', {
         itemId,
@@ -168,28 +221,67 @@ function ActionItems() {
         error,
       });
       setActionItems(previousItems);
-      setMessageTone('error');
+      setActionItemOrderIds(previousOrderIds);
+      writeActionItemOrder(actionItemOrderStorageKey, previousOrderIds);
       setMessage('액션 아이템 상태 변경에 실패했습니다.');
     }
   };
 
-  const handlePriorityChange = (itemId: string, priority: ActionItemPriority) => {
+  const handlePriorityChange = async (
+    itemId: string,
+    priority: ActionItemPriority,
+    targetItemId?: string,
+  ) => {
+    const previousItems = actionItems;
+    const previousOrderIds = actionItemOrderIds;
     const levels = priorityLevels[priority];
+    const movingItem = previousItems.find((item) => item.id === itemId);
 
-    setActionItems((items) =>
-      items.map((item) => (
+    if (!movingItem) {
+      return;
+    }
+    const nextStatus = movingItem.status === 'DONE' ? 'TODO' : movingItem.status;
+
+    const updatedItems = previousItems.map((item) => (
         item.id === itemId
           ? {
               ...item,
               priority,
               urgency: levels.urgency,
               importance: levels.importance,
+              status: nextStatus,
             }
           : item
-      )),
+    ));
+
+    setActionItems(updatedItems);
+    moveActionItemOrder(
+      itemId,
+      updatedItems,
+      updatedItems.filter((item) => item.status !== 'DONE' && item.priority === priority),
+      targetItemId,
     );
-    setMessageTone('success');
-    setMessage('우선순위 변경은 화면에만 임시 반영했습니다. API 엔드포인트를 받으면 저장까지 연결합니다.');
+    setMessage('');
+
+    try {
+      if (movingItem.status !== nextStatus) {
+        await updateActionItemStatus(itemId, { status: nextStatus });
+      }
+
+      if (movingItem.priority !== priority) {
+        await updateActionItemPriority(itemId, toApiPriorityPayload(priority));
+      }
+    } catch (error) {
+      console.error('[ActionItems][PriorityUpdateFailed]', {
+        itemId,
+        priority,
+        error,
+      });
+      setActionItems(previousItems);
+      setActionItemOrderIds(previousOrderIds);
+      writeActionItemOrder(actionItemOrderStorageKey, previousOrderIds);
+      setMessage('우선순위 변경에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const handleDeleteActionItem = async (itemId: string) => {
@@ -205,15 +297,12 @@ function ActionItems() {
 
     try {
       await deleteActionItem(itemId);
-      setMessageTone('success');
-      setMessage('액션 아이템을 삭제했습니다.');
     } catch (error) {
       console.error('[ActionItems][DeleteFailed]', {
         itemId,
         error,
       });
       setActionItems(previousItems);
-      setMessageTone('error');
       setMessage('액션 아이템 삭제에 실패했습니다.');
     } finally {
       setDeletingItemIds((itemIds) => itemIds.filter((id) => id !== itemId));
@@ -226,27 +315,38 @@ function ActionItems() {
         <ActionItemsHeader
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          users={users}
           currentUserId={currentUserId}
-          showAllItems={showAllItems}
-          onShowAllItemsChange={setShowAllItems}
+          showMyItems={showMyItems}
+          onShowMyItemsChange={(checked) => {
+            setShowMyItems(checked);
+
+            if (checked) {
+              setShowUnassignedItems(false);
+            }
+          }}
+          showUnassignedItems={showUnassignedItems}
+          onShowUnassignedItemsChange={(checked) => {
+            setShowUnassignedItems(checked);
+
+            if (checked) {
+              setShowMyItems(false);
+            }
+          }}
           totalCount={visibleActionItems.length}
           completedCount={completedActionItemCount}
         />
 
         {(message || projectContextErrorMessage) && (
-          <p className={!projectContextErrorMessage && messageTone === 'success' ? 'text-sm text-emerald-500' : 'text-sm text-primary'}>
+          <p className="text-sm text-primary">
             {projectContextErrorMessage || message}
           </p>
         )}
 
-        {isLoading && (
+        {isLoading ? (
           <div className="rounded-lg border border-border bg-card p-8 text-sm text-muted-foreground">
             액션 아이템을 불러오는 중입니다.
           </div>
-        )}
-
-        {!isLoading && actionItems.length === 0 ? (
+        ) : actionItems.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-secondary/40 p-10 text-center text-sm text-muted-foreground">
             아직 등록된 액션 아이템이 없습니다.
           </div>
@@ -262,9 +362,11 @@ function ActionItems() {
         ) : (
           <ActionItemsMatrixView
             groupedItems={priorityGroups}
+            completedItems={completedActionItems}
             users={users}
             onAssigneeChange={handleAssigneeChange}
             onPriorityChange={handlePriorityChange}
+            onStatusChange={handleStatusChange}
             onDelete={handleDeleteActionItem}
             deletingItemIds={deletingItemIds}
           />
@@ -277,19 +379,13 @@ function ActionItems() {
 const loadProjectActionItems = async ({
   projectId,
   currentUserId,
-  assigneeIds,
-  shouldLoadAll,
+  shouldLoadMine,
 }: {
   projectId: string;
   currentUserId: string;
-  assigneeIds: string[];
-  shouldLoadAll: boolean;
+  shouldLoadMine: boolean;
 }) => {
-  if (shouldLoadAll && assigneeIds.length > 0) {
-    return loadProjectActionItemsByAssignees(projectId, assigneeIds);
-  }
-
-  const assigneeId = currentUserId || undefined;
+  const assigneeId = shouldLoadMine ? currentUserId : undefined;
 
   try {
     return {
@@ -297,7 +393,6 @@ const loadProjectActionItems = async ({
         assignee_id: assigneeId,
         sort: 'created_at_desc',
       }),
-      isFallback: false,
     };
   } catch (error) {
     console.error('[ActionItems][SortedLoadFailed]', {
@@ -311,7 +406,6 @@ const loadProjectActionItems = async ({
         items: await getProjectActionItems(projectId, {
           assignee_id: assigneeId,
         }),
-        isFallback: true,
       };
     } catch (fallbackError) {
       console.error('[ActionItems][ProjectLoadFailed]', {
@@ -325,39 +419,104 @@ const loadProjectActionItems = async ({
   }
 };
 
-const loadProjectActionItemsByAssignees = async (projectId: string, assigneeIds: string[]) => {
-  const actionItemResults = await Promise.allSettled(
-    assigneeIds
-      .filter(Boolean)
-      .map(async (assigneeId) => {
-        try {
-          return await getProjectActionItems(projectId, {
-            assignee_id: assigneeId,
-            sort: 'created_at_desc',
-          });
-        } catch (error) {
-          console.error('[ActionItems][AssigneeSortedLoadFailed]', {
-            projectId,
-            assigneeId,
-            error,
-          });
+const sortActionItemsByOrder = (items: ActionItem[], orderIds: string[]) => {
+  const orderIndex = new Map(orderIds.map((id, index) => [id, index]));
 
-          return getProjectActionItems(projectId, { assignee_id: assigneeId });
-        }
-      }),
-  );
-  const fulfilledItems = actionItemResults.flatMap((result) =>
-    result.status === 'fulfilled' ? result.value : [],
-  );
+  return [...items].sort((firstItem, secondItem) => {
+    const firstIndex = orderIndex.get(firstItem.id);
+    const secondIndex = orderIndex.get(secondItem.id);
 
-  return {
-    items: dedupeActionItems(fulfilledItems),
-    isFallback: actionItemResults.some((result) => result.status === 'rejected'),
-  };
+    if (firstIndex !== undefined && secondIndex !== undefined) {
+      return firstIndex - secondIndex;
+    }
+
+    if (firstIndex !== undefined) {
+      return -1;
+    }
+
+    if (secondIndex !== undefined) {
+      return 1;
+    }
+
+    return 0;
+  });
 };
 
-const dedupeActionItems = (items: ActionItemResponse[]) => {
-  return Array.from(new Map(items.map((item) => [item.id, item])).values());
+const getMovedActionItemOrder = ({
+  currentOrderIds,
+  updatedItems,
+  destinationItems,
+  itemId,
+  targetItemId,
+}: {
+  currentOrderIds: string[];
+  updatedItems: ActionItem[];
+  destinationItems: ActionItem[];
+  itemId: string;
+  targetItemId?: string;
+}) => {
+  const allItemIds = updatedItems.map((item) => item.id);
+  const allItemIdSet = new Set(allItemIds);
+  const baseOrderIds = [
+    ...currentOrderIds.filter((id) => allItemIdSet.has(id) && id !== itemId),
+    ...allItemIds.filter((id) => id !== itemId && !currentOrderIds.includes(id)),
+  ];
+  const orderedDestinationIds = sortActionItemsByOrder(
+    destinationItems.filter((item) => item.id !== itemId),
+    currentOrderIds,
+  ).map((item) => item.id);
+  const validTargetItemId = targetItemId && orderedDestinationIds.includes(targetItemId)
+    ? targetItemId
+    : undefined;
+
+  if (validTargetItemId) {
+    const targetIndex = baseOrderIds.indexOf(validTargetItemId);
+
+    return [
+      ...baseOrderIds.slice(0, targetIndex),
+      itemId,
+      ...baseOrderIds.slice(targetIndex),
+    ];
+  }
+
+  const lastDestinationItemId = orderedDestinationIds.at(-1);
+
+  if (!lastDestinationItemId) {
+    return [...baseOrderIds, itemId];
+  }
+
+  const lastDestinationIndex = baseOrderIds.indexOf(lastDestinationItemId);
+
+  return [
+    ...baseOrderIds.slice(0, lastDestinationIndex + 1),
+    itemId,
+    ...baseOrderIds.slice(lastDestinationIndex + 1),
+  ];
+};
+
+const readActionItemOrder = (storageKey: string) => {
+  if (!storageKey) {
+    return [];
+  }
+
+  try {
+    const value = window.localStorage.getItem(storageKey);
+    const parsedValue = value ? JSON.parse(value) : [];
+
+    return Array.isArray(parsedValue)
+      ? parsedValue.filter((item): item is string => typeof item === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeActionItemOrder = (storageKey: string, orderIds: string[]) => {
+  if (!storageKey) {
+    return;
+  }
+
+  window.localStorage.setItem(storageKey, JSON.stringify(orderIds));
 };
 
 const toActionItem = (item: ActionItemResponse): ActionItem => {
@@ -393,6 +552,22 @@ const toActionItemPriority = (
   importance?: number | null,
   urgency?: number | null,
 ): ActionItemPriority => {
+  if (importance !== null && importance !== undefined && urgency !== null && urgency !== undefined) {
+    if (importance >= 2 && urgency >= 2) {
+      return 'DO';
+    }
+
+    if (importance >= 2) {
+      return 'SCHEDULE';
+    }
+
+    if (urgency >= 2) {
+      return 'DELEGATE';
+    }
+
+    return 'DELETE';
+  }
+
   if (priority !== null && priority !== undefined) {
     if (priority >= 3) {
       return 'DO';
@@ -416,6 +591,38 @@ const toActionItemPriority = (
   }
 
   return 'DELETE';
+};
+
+const toApiPriorityPayload = (priority: ActionItemPriority) => {
+  if (priority === 'DO') {
+    return {
+      priority: 3,
+      importance: 2,
+      urgency: 2,
+    };
+  }
+
+  if (priority === 'SCHEDULE') {
+    return {
+      priority: 2,
+      importance: 2,
+      urgency: 1,
+    };
+  }
+
+  if (priority === 'DELEGATE') {
+    return {
+      priority: 2,
+      importance: 1,
+      urgency: 2,
+    };
+  }
+
+  return {
+    priority: 1,
+    importance: 1,
+    urgency: 1,
+  };
 };
 
 export default ActionItems;

@@ -3,11 +3,12 @@ export type UserIdentityMode = 'access' | 'create';
 
 export interface ProjectNavigationState {
   userId: string;
+  userName: string;
   userUuid: string;
   projectId: string;
   projectCode: string;
   title: string;
-  role: 'admin';
+  role?: 'admin' | 'member';
 }
 
 export interface UserIdentity {

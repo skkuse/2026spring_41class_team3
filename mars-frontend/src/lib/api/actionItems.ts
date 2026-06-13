@@ -28,7 +28,7 @@ export interface MeetingAnalyzeResponse {
 }
 
 export interface ActionItemCreateRequest {
-  assignee_id: string;
+  assignee_id: string | null;
   meeting_id: string;
   description: string;
   status?: string;
@@ -43,7 +43,13 @@ export interface ActionItemStatusUpdateRequest {
 }
 
 export interface ActionItemAssigneeUpdateRequest {
-  assignee_id: string;
+  assignee_id: string | null;
+}
+
+export interface ActionItemPriorityUpdateRequest {
+  priority: number;
+  importance: number;
+  urgency: number;
 }
 
 export interface GetProjectActionItemsParams {
@@ -68,6 +74,13 @@ export const updateActionItemStatus = (itemId: string, body: ActionItemStatusUpd
 
 export const updateActionItemAssignee = (itemId: string, body: ActionItemAssigneeUpdateRequest) => {
   return apiRequest<ActionItemResponse>(`/action-items/${encodeURIComponent(itemId)}/assignee`, {
+    method: 'PATCH',
+    body,
+  });
+};
+
+export const updateActionItemPriority = (itemId: string, body: ActionItemPriorityUpdateRequest) => {
+  return apiRequest<ActionItemResponse>(`/action-items/${encodeURIComponent(itemId)}/priority`, {
     method: 'PATCH',
     body,
   });

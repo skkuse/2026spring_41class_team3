@@ -44,3 +44,11 @@ class ProjectMemberResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UserProjectResponse(BaseModel):
+    id: uuid.UUID
+    project_code: str
+    name: str
+
+    class Config:
+        from_attributes = True

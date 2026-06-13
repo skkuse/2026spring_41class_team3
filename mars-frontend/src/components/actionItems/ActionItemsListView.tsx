@@ -1,4 +1,5 @@
 import { useState, type DragEvent } from 'react';
+import { typography } from '../../lib/typography';
 import { statusColumns } from './actionItemConfig';
 import ActionItemCard from './ActionItemCard';
 import type { ActionItem, ActionItemStatus, User } from './types';
@@ -7,7 +8,7 @@ interface ActionItemsListViewProps {
   groupedItems: Record<ActionItemStatus, ActionItem[]>;
   users: User[];
   onAssigneeChange: (itemId: string, assigneeId: string) => void;
-  onStatusChange: (itemId: string, status: ActionItemStatus) => void;
+  onStatusChange: (itemId: string, status: ActionItemStatus, targetItemId?: string) => void;
   onDelete: (itemId: string) => void;
   deletingItemIds?: string[];
 }
@@ -28,12 +29,14 @@ function ActionItemsListView({
   const handleDrop = (
     event: DragEvent<HTMLDivElement>,
     status: ActionItemStatus,
+    targetItemId?: string,
   ) => {
     event.preventDefault();
+    event.stopPropagation();
     const itemId = event.dataTransfer.getData('text/plain');
 
-    if (itemId) {
-      onStatusChange(itemId, status);
+    if (itemId && itemId !== targetItemId) {
+      onStatusChange(itemId, status, targetItemId);
     }
 
     setDraggingItemId(null);
@@ -66,9 +69,9 @@ function ActionItemsListView({
           >
             <div className="flex items-center gap-3">
               <Icon className={`h-6 w-6 ${column.accent}`} strokeWidth={2} />
-              <h2 className="text-xl text-foreground">
+              <h2 className={typography.sectionTitle}>
                 {column.title}{' '}
-                <span className="text-lg text-muted-foreground">
+                <span className="text-base text-muted-foreground">
                   ({items.length})
                 </span>
               </h2>
@@ -89,21 +92,30 @@ function ActionItemsListView({
             ) : (
               <div className="flex flex-col gap-4">
                 {items.map((item) => (
-                  <ActionItemCard
+                  <div
                     key={item.id}
-                    item={item}
-                    users={users}
-                    onAssigneeChange={onAssigneeChange}
-                    onDelete={onDelete}
-                    isDeleting={deletingItemIds.includes(item.id)}
-                    canChangeAssignee
-                    onDragStart={setDraggingItemId}
-                    onDragEnd={() => {
-                      setDraggingItemId(null);
-                      setActiveDropStatus(null);
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      event.dataTransfer.dropEffect = 'move';
+                      setActiveDropStatus(column.key);
                     }}
-                    isDragging={draggingItemId === item.id}
-                  />
+                    onDrop={(event) => handleDrop(event, column.key, item.id)}
+                  >
+                    <ActionItemCard
+                      item={item}
+                      users={users}
+                      onAssigneeChange={onAssigneeChange}
+                      onDelete={onDelete}
+                      isDeleting={deletingItemIds.includes(item.id)}
+                      canChangeAssignee
+                      onDragStart={setDraggingItemId}
+                      onDragEnd={() => {
+                        setDraggingItemId(null);
+                        setActiveDropStatus(null);
+                      }}
+                      isDragging={draggingItemId === item.id}
+                    />
+                  </div>
                 ))}
               </div>
             )}

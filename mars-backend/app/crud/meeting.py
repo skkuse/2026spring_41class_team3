@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
+from fastapi import HTTPException
 from app.models import Meeting, MeetingSummary, MeetingProductivity, Agenda, ActionItem, User
 from app.schemas import MeetingCreate, MeetingSummaryCreate, MeetingProductivityCreate, AgendaCreate
 import uuid
@@ -29,6 +30,14 @@ def create_agenda(db: Session, agenda: AgendaCreate, project_id: uuid.UUID):
     db.add(db_agenda)
     db.commit()
     return db_agenda
+
+def get_meetings_by_project(db: Session, project_id: uuid.UUID) -> List[Meeting]:
+    return (
+        db.query(Meeting)
+        .filter(Meeting.project_id == project_id)
+        .order_by(desc(Meeting.created_at))
+        .all()
+    )
 
 def get_meeting(db: Session, meeting_id: uuid.UUID):
     meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()

@@ -1,4 +1,4 @@
-import { CheckCircle2, FileText, PlusCircle, UsersRound } from 'lucide-react';
+import { CheckCircle2, FileText, FolderOpen, PlusCircle, UsersRound } from 'lucide-react';
 import type * as React from 'react';
 import UserIdentityPanel from './UserIdentityPanel';
 import type { UserIdentity, UserIdentityMode } from './types';
@@ -21,6 +21,7 @@ interface LandingHeroProps {
   onSwitchToAccessUser: () => void;
   onCreateProjectClick: () => void;
   onJoinProjectClick: () => void;
+  onOpenExistingProjectsClick: () => void;
 }
 
 const LandingHero = ({
@@ -41,6 +42,7 @@ const LandingHero = ({
   onSwitchToAccessUser,
   onCreateProjectClick,
   onJoinProjectClick,
+  onOpenExistingProjectsClick,
 }: LandingHeroProps) => {
   const isUserReady = currentUser !== null;
   const featureHighlights = [
@@ -92,10 +94,10 @@ const LandingHero = ({
           onSwitchToCreateUser={onSwitchToCreateUser}
           onSwitchToAccessUser={onSwitchToAccessUser}
         />
-        <div className="flex gap-5 justify-center mb-24 max-sm:flex-col max-sm:items-stretch">
+        <div className="flex flex-wrap gap-4 justify-center mb-24 max-sm:flex-col max-sm:items-stretch">
           <button
             type="button"
-            className="bg-primary text-primary-foreground font-semibold px-10 py-4 rounded-lg hover:opacity-90 text-base cursor-pointer flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed min-w-[220px]"
+            className="bg-primary text-primary-foreground font-semibold px-8 py-4 rounded-lg hover:opacity-90 text-base cursor-pointer flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed min-w-[210px]"
             onClick={onCreateProjectClick}
             disabled={!isUserReady}
           >
@@ -104,7 +106,16 @@ const LandingHero = ({
           </button>
           <button
             type="button"
-            className="bg-secondary text-foreground border border-border font-semibold px-10 py-4 rounded-lg hover:bg-neutral-800 text-base cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-w-[220px]"
+            className="bg-card text-foreground border border-primary/40 font-semibold px-8 py-4 rounded-lg hover:border-primary hover:bg-muted text-base cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-w-[210px] flex items-center justify-center gap-2 transition-all"
+            onClick={onOpenExistingProjectsClick}
+            disabled={!isUserReady}
+          >
+            <FolderOpen className="w-4 h-4" />
+            기존 프로젝트 접속
+          </button>
+          <button
+            type="button"
+            className="bg-secondary text-foreground border border-border font-semibold px-8 py-4 rounded-lg hover:bg-neutral-800 text-base cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed min-w-[210px]"
             onClick={onJoinProjectClick}
             disabled={!isUserReady}
           >
