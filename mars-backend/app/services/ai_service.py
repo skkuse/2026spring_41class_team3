@@ -177,7 +177,7 @@ def calculate_productivity_score(
     gpt_response: Dict[str, Any],
     meeting_data: Dict[str, Any],
     project_db_context: Dict[str, Any],
-) -> float:
+) -> int:
     scores = {}
     weights = {
         "purpose_clarity": 0.20,
@@ -186,14 +186,9 @@ def calculate_productivity_score(
         "prev_feedback_reflection": 0.15,
         "participation_quality": 0.10,
     }
-    
-    purpose = meeting_data.get("purpose", "").strip()
-    if len(purpose) > 50:
-        scores["purpose_clarity"] = 85
-    elif len(purpose) > 20:
-        scores["purpose_clarity"] = 60
-    else:
-        scores["purpose_clarity"] = 30
+
+    bert_f1 = project_db_context.get("bert_f1", 0.0)
+    scores["purpose_clarity"] = min(100, int(bert_f1 * 100))
     
     action_items = gpt_response.get("action_items", [])
     action_count = len(action_items)
@@ -266,8 +261,8 @@ def calculate_productivity_score(
         scores.get(metric, 0) * weights[metric]
         for metric in weights.keys()
     )
-    
-    return max(0, min(100, round(final_score, 1)))
+
+    return int(max(0, min(100, round(final_score))))
 
 
 def analyze_meeting(db: Session, meeting_id: uuid.UUID) -> MeetingAnalyzeResponse:
@@ -292,6 +287,7 @@ def analyze_meeting(db: Session, meeting_id: uuid.UUID) -> MeetingAnalyzeRespons
     project_db_context = {
         "prev_feedback": input_data.get("prev_feedback", ""),
         "prev_completion_rate": _calculate_completion_rate(db, meeting_id),
+        "bert_f1": bert_metrics.get("f1", 0.0),
     }
     
     productivity_score = calculate_productivity_score(
