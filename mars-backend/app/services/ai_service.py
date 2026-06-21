@@ -149,6 +149,127 @@ def _evaluate_bert(raw_text: str, generated_text: Dict[str, Any]) -> Dict[str, f
         raise HFSpaceConnectionException(detail=f"HF Space 통신 오류: {e}")
 
 
+def _calculate_completion_rate(db: Session, meeting_id: uuid.UUID) -> float:
+    from app.models import Meeting, ActionItem
+    
+    meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+    if not meeting or not meeting.project_id:
+        return 0.0
+    
+    prev_items = (
+        db.query(ActionItem)
+        .join(Meeting, ActionItem.meeting_id == Meeting.id)
+        .filter(
+            Meeting.project_id == meeting.project_id,
+            Meeting.id != meeting_id,
+        )
+        .all()
+    )
+    
+    if not prev_items:
+        return 0.0
+    
+    completed = sum(1 for item in prev_items if item.status == "DONE")
+    return completed / len(prev_items)
+
+
+def calculate_productivity_score(
+    gpt_response: Dict[str, Any],
+    meeting_data: Dict[str, Any],
+    project_db_context: Dict[str, Any],
+) -> float:
+    scores = {}
+    weights = {
+        "purpose_clarity": 0.20,
+        "action_items": 0.30,
+        "decision_clarity": 0.25,
+        "prev_feedback_reflection": 0.15,
+        "participation_quality": 0.10,
+    }
+    
+    purpose = meeting_data.get("purpose", "").strip()
+    if len(purpose) > 50:
+        scores["purpose_clarity"] = 85
+    elif len(purpose) > 20:
+        scores["purpose_clarity"] = 60
+    else:
+        scores["purpose_clarity"] = 30
+    
+    action_items = gpt_response.get("action_items", [])
+    action_count = len(action_items)
+    
+    high_priority = sum(1 for item in action_items if item.get("priority") == 1)
+    
+    if 3 <= action_count <= 8:
+        base_score = 80
+    elif action_count > 8:
+        base_score = 70
+    elif action_count > 0:
+        base_score = 60
+    else:
+        base_score = 20
+    
+    if 0 < high_priority <= 3:
+        scores["action_items"] = min(100, base_score + 10)
+    elif high_priority > 3:
+        scores["action_items"] = max(20, base_score - 15)
+    else:
+        scores["action_items"] = base_score
+    
+    summary = gpt_response.get("summary", "").strip()
+    next_agenda = gpt_response.get("next_agenda", [])
+    
+    summary_length_score = min(100, len(summary) // 3)
+    decision_clarity = 50
+    
+    if summary_length_score > 70:
+        decision_clarity += 30
+    elif summary_length_score > 40:
+        decision_clarity += 15
+    
+    if len(next_agenda) >= 2:
+        decision_clarity += 15
+    elif len(next_agenda) == 1:
+        decision_clarity += 5
+    
+    scores["decision_clarity"] = min(100, decision_clarity)
+    
+    feedback_text = gpt_response.get("qualitative_feedback", "").lower()
+    improvement_keywords = ["개선", "보완", "더", "향상", "효율"]
+    mentioned_improvements = sum(
+        1 for keyword in improvement_keywords if keyword in feedback_text
+    )
+    
+    if mentioned_improvements >= 2:
+        scores["prev_feedback_reflection"] = 80
+    elif mentioned_improvements >= 1:
+        scores["prev_feedback_reflection"] = 60
+    else:
+        scores["prev_feedback_reflection"] = 40
+    
+    if project_db_context.get("prev_completion_rate", 0) > 0.7:
+        scores["prev_feedback_reflection"] = min(
+            100, scores["prev_feedback_reflection"] + 15
+        )
+    
+    participants = meeting_data.get("participants", "").strip()
+    participant_count = len([p for p in participants.split(",") if p.strip()])
+    
+    if participant_count >= 3:
+        scores["participation_quality"] = 80
+    elif participant_count >= 2:
+        scores["participation_quality"] = 60
+    else:
+        scores["participation_quality"] = 40
+    
+    final_score = sum(
+        scores.get(metric, 0) * weights[metric]
+        for metric in weights.keys()
+    )
+    
+    return max(0, min(100, round(final_score, 1)))
+
+
 def analyze_meeting(db: Session, meeting_id: uuid.UUID) -> MeetingAnalyzeResponse:
     input_data = get_meeting_analysis_input(db, meeting_id)
     if input_data is None:
@@ -167,6 +288,23 @@ def analyze_meeting(db: Session, meeting_id: uuid.UUID) -> MeetingAnalyzeRespons
     from app.models import Meeting as MeetingModel
     meeting_row = db.query(MeetingModel).filter(MeetingModel.id == meeting_id).first()
     project_id = meeting_row.project_id if meeting_row else None
+
+    project_db_context = {
+        "prev_feedback": input_data.get("prev_feedback", ""),
+        "prev_completion_rate": _calculate_completion_rate(db, meeting_id),
+    }
+    
+    productivity_score = calculate_productivity_score(
+        gpt_response,
+        {
+            "purpose": input_data["meeting_purpose"],
+            "raw_text": meeting_script,
+            "participants": input_data["participants"],
+        },
+        project_db_context,
+    )
+    
+    bert_metrics["productivity_score"] = productivity_score
 
     try:
         save_analysis_result(db, meeting_id, project_id, gpt_response, bert_metrics)

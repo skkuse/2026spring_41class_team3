@@ -145,12 +145,12 @@ def save_analysis_result(
 
     existing_prod = db.query(MeetingProductivity).filter(MeetingProductivity.meeting_id == meeting_id).first()
     if existing_prod:
-        existing_prod.score = bert_metrics.get("f1", 0.0)
+        existing_prod.score = bert_metrics.get("productivity_score", 0.0)
         existing_prod.metrics = bert_metrics
     else:
         db_prod = MeetingProductivity(
             meeting_id=meeting_id,
-            score=bert_metrics.get("f1", 0.0),
+            score=bert_metrics.get("productivity_score", 0.0),
             metrics=bert_metrics,
         )
         db.add(db_prod)
